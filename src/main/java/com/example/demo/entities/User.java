@@ -21,6 +21,8 @@ public class User {
     private String password;
     private String city;
     private String state;
+    @Column(columnDefinition = "boolean default true")
+    private boolean isActive = true;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

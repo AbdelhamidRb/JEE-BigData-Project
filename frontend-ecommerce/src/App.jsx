@@ -4,7 +4,8 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
-
+import AdminProduct from './components/AdminProduct';
+import UsersManagement from './components/UsersManagement';
 function App() {
   return (
     <Router>
@@ -16,6 +17,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/products" element={<AdminProduct />} />
+        <Route path="/admin/users" element={<UsersManagement />} />
       </Routes>
     </Router>
   );

@@ -16,6 +16,9 @@ public class Product {
     private Double price;
     private Integer stock;
 
+    @Column(columnDefinition = "boolean default true")
+    private boolean isActive = true;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;

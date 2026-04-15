@@ -24,6 +24,12 @@ export default function Navbar() {
                     </>
                 ) : (
                     <>
+                        {userRole === 'ADMIN' && (
+                            <>
+                                <Link to="/admin/products" className="nav-link">Gestion Produits</Link>
+                                <Link to="/admin/users" className="nav-link">Gérer Utilisateurs</Link>
+                            </>
+                        )}
                         <Link to={userRole === 'ADMIN' ? "/admin/dashboard" : "/dashboard"} className="nav-link">
                             Dashboard
                         </Link>

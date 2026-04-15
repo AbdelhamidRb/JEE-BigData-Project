@@ -13,7 +13,7 @@ public class Order {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String status; // Ex: PENDING, VALIDATED, SHIPPED
+    private String status;
     private Double totalAmount;
     private LocalDateTime orderDate;
 

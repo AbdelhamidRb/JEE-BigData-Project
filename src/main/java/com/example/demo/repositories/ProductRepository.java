@@ -7,4 +7,5 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     // Permet de filtrer le catalogue par catégorie
     List<Product> findByCategoryId(Long categoryId);
+    List<Product> findByIsActiveTrue();
 }
