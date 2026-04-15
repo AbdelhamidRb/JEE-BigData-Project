@@ -1,25 +1,22 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import Register from './components/Register';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar'; // Import de la nouvelle Navbar
 import Login from './components/Login';
+import Register from './components/Register';
 import Dashboard from './components/Dashboard';
-import './index.css'; // On importe notre beau fichier CSS
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
   return (
     <Router>
-      <div>
-        <nav className="navbar">
-          <Link to="/login" className="nav-link">Connexion</Link>
-          <Link to="/register" className="nav-link">Inscription</Link>
-        </nav>
+      <Navbar /> {/* Elle est ici, en dehors des Routes pour être visible partout */}
 
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      </Routes>
     </Router>
   );
 }
