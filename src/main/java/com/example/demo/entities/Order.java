@@ -21,6 +21,7 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"orders", "password", "authorities", "enabled", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
     private User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)

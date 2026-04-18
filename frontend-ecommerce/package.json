@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 9595",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -32,7 +32,7 @@
     "tailwindcss": "^3.4.19",
     "vite": "^8.0.4"
   },"scripts": {
-  "dev": "vite",
+  "dev": "vite --port 9595",
   "build": "vite build",
   "preview": "vite preview"
   }

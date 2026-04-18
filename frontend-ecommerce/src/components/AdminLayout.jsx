@@ -42,6 +42,12 @@ export default function AdminLayout() {
                         <Link to="/admin/users" className={getLinkClass("users")}>
                             <span className="mr-3 text-lg">👥</span> Utilisateurs
                         </Link>
+                        <Link to="/admin/categories" className={getLinkClass("categories")}>
+                            <span className="mr-3 text-lg">📁</span> Catégories
+                        </Link>
+                        <Link to="/admin/orders" className={getLinkClass("orders")}>
+                            <span className="mr-3 text-lg">🛒</span> Commandes
+                        </Link>
                     </nav>
                 </div>
 

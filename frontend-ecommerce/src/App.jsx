@@ -16,6 +16,8 @@ import Home from './components/Home';
 import ProductList from './components/ProductList';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
+import CategoryManagement from './components/CategoryManagement';
+import OrderManagement from './components/OrderManagement';
 
 
 function App() {
@@ -44,7 +46,9 @@ function App() {
                 {/* Ces sous-routes s'injectent dans AdminLayout (SANS slash devant) */}
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="products" element={<AdminProduct />} />
+                <Route path="categories" element={<CategoryManagement />} />
                 <Route path="users" element={<UsersManagement />} />
+                <Route path="orders" element={<OrderManagement />} />
               </Route>
             </Routes>
           </Router>
