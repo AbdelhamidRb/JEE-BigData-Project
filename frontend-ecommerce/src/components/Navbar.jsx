@@ -1,19 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { CartContext } from '../context/CartContext'; // AJOUT
 
 export default function Navbar() {
     const navigate = useNavigate();
     const { isAuthenticated, userRole, logout } = useContext(AuthContext);
+    const { cartCount } = useContext(CartContext); // AJOUT
 
     const handleLogout = () => {
-        // 1. On navigue d'abord vers la home (qui est publique donc sans PrivateRoute)
         navigate('/', { replace: true });
-
-        // 2. Puis on vide le compte
         setTimeout(() => {
             logout();
-            toast.success("Déconnexion réussie");
         }, 10);
     };
 
@@ -21,7 +19,6 @@ export default function Navbar() {
         <nav className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
-                    {/* LOGO */}
                     <div className="flex-shrink-0 flex items-center">
                         <Link to="/" className="text-2xl font-black tracking-tighter hover:opacity-80 transition-opacity">
                             <span className="text-blue-600">E-Commerce</span>
@@ -29,16 +26,11 @@ export default function Navbar() {
                         </Link>
                     </div>
 
-                    {/* LIENS */}
                     <div className="flex items-center gap-6">
                         {!isAuthenticated ? (
                             <>
-                                <Link to="/login" className="text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors">
-                                    Connexion
-                                </Link>
-                                <Link to="/register" className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all">
-                                    Inscription
-                                </Link>
+                                <Link to="/login" className="text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors">Connexion</Link>
+                                <Link to="/register" className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all">Inscription</Link>
                             </>
                         ) : (
                             <>
@@ -47,17 +39,26 @@ export default function Navbar() {
                                         ⚙️ Espace Admin
                                     </Link>
                                 ) : (
-                                    <Link to="/dashboard" className="text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors">
-                                        Mon Espace
-                                    </Link>
+                                    <div className="flex items-center gap-5">
+                                        <Link to="/dashboard" className="text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors">
+                                            Catalogue
+                                        </Link>
+
+                                        {/* ICÔNE PANIER AVEC BADGE */}
+                                        <Link to="/cart" className="relative text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                                            <span className="text-2xl">🛒</span>
+                                            {cartCount > 0 && (
+                                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm border-2 border-white">
+                                                    {cartCount}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    </div>
                                 )}
 
                                 <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block"></div>
 
-                                <button
-                                    onClick={handleLogout}
-                                    className="text-sm font-semibold text-red-600 hover:text-white border border-red-600 hover:bg-red-600 px-4 py-2 rounded-lg transition-all focus:ring-2 focus:ring-red-500 focus:outline-none"
-                                >
+                                <button onClick={handleLogout} className="text-sm font-semibold text-red-600 hover:text-white border border-red-600 hover:bg-red-600 px-4 py-2 rounded-lg transition-all focus:ring-2 focus:ring-red-500 focus:outline-none">
                                     Déconnexion
                                 </button>
                             </>

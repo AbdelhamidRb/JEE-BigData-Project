@@ -22,6 +22,8 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    private String imageUrl;
+
     // C'est ICI que doit se trouver la liste !
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     @ToString.Exclude

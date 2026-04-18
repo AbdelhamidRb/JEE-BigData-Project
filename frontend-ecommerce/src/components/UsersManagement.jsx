@@ -22,8 +22,9 @@ export default function UsersManagement() {
             const response = await api.get('/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            console.log("DATA:", response.data);
             // On stocke tous les utilisateurs (le filtrage se fera côté client pour la recherche)
-            setUsers(response.data);
+            setUsers(Array.isArray(response.data) ? response.data : response.data.content || []);
         } catch (error) {
             console.error('Erreur réseau:', error);
             toast.error("Erreur lors du chargement des utilisateurs");
