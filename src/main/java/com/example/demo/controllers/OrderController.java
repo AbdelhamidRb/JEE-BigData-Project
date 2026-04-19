@@ -5,9 +5,12 @@ import com.example.demo.dto.*;
 import com.example.demo.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -68,4 +71,36 @@ public class OrderController {
         User user = userRepository.findByEmail(auth.getName()).orElseThrow();
         return ResponseEntity.ok(orderRepository.findByUserOrderByIdDesc(user));
     }
+
+
+    //partie admin
+
+    // NOUVEAU : Récupérer toutes les commandes pour l'Admin
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<List<Order>> getAllOrdersForAdmin() {
+        // Optionnel : Vous pouvez créer une méthode findAllByOrderByIdDesc() dans le repo pour trier par date
+        return ResponseEntity.ok(orderRepository.findAll());
+    }
+
+    // NOUVEAU : Mettre à jour le statut d'une commande
+    @PatchMapping("/admin/{id}/status")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        return orderRepository.findById(id).map(order -> {
+            order.setStatus(payload.get("status"));
+            orderRepository.save(order);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+
+
+    @GetMapping("/admin/sales-by-category")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> getSalesByCategory() {
+        return ResponseEntity.ok(orderRepository.findSalesByCategory());
+    }
+
+
 }

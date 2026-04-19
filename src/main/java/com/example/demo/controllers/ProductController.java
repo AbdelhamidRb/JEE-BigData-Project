@@ -113,13 +113,13 @@ public class ProductController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping("/{id}/toggle-status")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
-        if (productRepository.existsById(id)) {
-            productRepository.deleteById(id);
+    public ResponseEntity<?> toggleProductStatus(@PathVariable Long id) {
+        return productRepository.findById(id).map(p -> {
+            p.setActive(!p.isActive()); // Inverse le statut actuel
+            productRepository.save(p);
             return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 }
