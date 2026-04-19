@@ -96,27 +96,33 @@ export default function AdminProduct() {
     };
 
     const handleToggleStatus = async (product) => {
+        // Vérifie le statut actuel (selon comment Spring le renvoie : active ou isActive)
         const currentStatus = product.active !== undefined ? product.active : product.isActive;
         const newStatus = !currentStatus;
         const action = newStatus ? 'activer' : 'désactiver';
+
         const result = await Swal.fire({
             title: 'Confirmation',
             text: `Voulez-vous vraiment ${action} "${product.name}" ?`,
-            icon: 'warning', showCancelButton: true,
+            icon: 'warning',
+            showCancelButton: true,
             confirmButtonColor: newStatus ? '#3B6D11' : '#A32D2D',
             cancelButtonColor: '#6B5B4E',
-            confirmButtonText: `Oui, ${action}`, cancelButtonText: 'Annuler'
+            confirmButtonText: `Oui, ${action}`,
+            cancelButtonText: 'Annuler'
         });
+
         if (result.isConfirmed) {
             const loadingToast = toast.loading('Mise à jour du statut...');
             try {
-                const payload = { ...product, category: { id: product.category?.id }, active: newStatus, isActive: newStatus };
-                const data = new FormData();
-                data.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-                await api.put(`/products/${product.id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+                // Appel direct à la nouvelle route allégée
+                await api.put(`/products/${product.id}/toggle-status`);
+
                 toast.success(`Produit ${newStatus ? 'activé' : 'désactivé'}`, { id: loadingToast });
-                fetchProducts();
-            } catch { toast.error('Erreur lors de la modification', { id: loadingToast }); }
+                fetchProducts(); // Recharge la liste
+            } catch (error) {
+                toast.error('Erreur lors de la modification', { id: loadingToast });
+            }
         }
     };
 

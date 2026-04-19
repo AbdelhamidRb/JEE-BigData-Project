@@ -1,15 +1,11 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState } from 'react';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userRole, setUserRole] = useState(null);
-
-    useEffect(() => {
-        setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
-        setUserRole(localStorage.getItem('userRole'));
-    }, []);
+    // 1. Initialisation directe (React lit le localStorage immédiatement)
+    const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('isAuthenticated') === 'true');
+    const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole'));
 
     const login = (role) => {
         setIsAuthenticated(true);

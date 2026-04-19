@@ -151,7 +151,7 @@ export default function Home() {
           min-height: 100vh;
           display: grid;
           grid-template-columns: 1fr 1fr;
-          padding-top: 72px;
+          padding-top: 0; /* avoid extra space under fixed navbar */
         }
         .vaux-hero-left {
           background: var(--cream);

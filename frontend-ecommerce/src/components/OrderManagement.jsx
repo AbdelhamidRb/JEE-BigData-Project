@@ -19,31 +19,35 @@ export default function OrderManagement() {
 
     useEffect(() => { fetchOrders(); }, []);
 
-    const fetchOrders = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/admin/orders');
-            setOrders(res.data);
-        } catch (err) {
-            console.error(err);
-            toast.error('Erreur chargement commandes');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // 1. Correction de l'URL pour la récupération
+        const fetchOrders = async () => {
+            setLoading(true);
+            try {
+                // Correspond au @GetMapping("/admin/all") du OrderController
+                const res = await api.get('/orders/admin/all');
+                setOrders(res.data);
+            } catch (err) {
+                console.error(err);
+                toast.error('Erreur chargement commandes');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const updateStatus = async (id, status) => {
-        setUpdating(id);
-        try {
-            await api.patch(`/admin/orders/${id}/status`, status);
-            toast.success('Statut mis à jour');
-            setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
-        } catch {
-            toast.error('Erreur mise à jour');
-        } finally {
-            setUpdating(null);
-        }
-    };
+        // 2. Correction de l'URL et du Payload (format { status: "LIVRE" })
+        const updateStatus = async (id, status) => {
+            setUpdating(id);
+            try {
+                // Envoi d'un objet JSON propre plutôt qu'une simple chaîne de caractères
+                await api.patch(`/orders/admin/${id}/status`, { status });
+                toast.success('Statut mis à jour');
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+            } catch {
+                toast.error('Erreur mise à jour');
+            } finally {
+                setUpdating(null);
+            }
+        };
 
     const filteredOrders = orders.filter(o => {
         const matchSearch = (o.user?.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,7 +174,7 @@ export default function OrderManagement() {
                                                 </span>
                                         </td>
                                         <td className="vom-td">
-                                            <span className="vom-amount">{Number(order.totalAmount).toFixed(2)} DH</span>
+                                            <span className="vom-amount">{Number(order.totalAmount).toFixed(2)} €</span>
                                         </td>
                                         <td className="vom-td vom-td-center">
                                                 <span className="vom-status-badge" style={{ background: cfg.bg, color: cfg.color }}>

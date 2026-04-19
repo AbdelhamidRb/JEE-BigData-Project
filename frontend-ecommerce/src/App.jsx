@@ -20,6 +20,8 @@ import Checkout from './components/Checkout';
 import CategoryManagement from './components/CategoryManagement';
 import OrderManagement from './components/OrderManagement';
 
+import MyOrders from './components/MyOrders';
+
 
 function App() {
   return (
@@ -38,6 +40,7 @@ function App() {
               {/* Route protégée : Utilisateur Standard (Catalogue des produits) */}
               <Route path="/dashboard" element={<PrivateRoute><ProductList /></PrivateRoute>} />
               <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} /> {/* <-- ICI */}
+              <Route path="/mes-commandes" element={<PrivateRoute><MyOrders /></PrivateRoute>} />
 
               {/* NOUVELLE ROUTE : Checkout */}
               <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
