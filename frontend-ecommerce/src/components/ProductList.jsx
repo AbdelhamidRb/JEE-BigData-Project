@@ -3,27 +3,40 @@ import api from '../api/axios';
 import { CartContext } from '../context/CartContext';
 import toast from 'react-hot-toast';
 
+const CartIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+);
+
+const MinusIcon = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+);
+
+const PlusIcon = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+);
+
 export default function ProductList() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [quantities, setQuantities] = useState({}); // État pour gérer les quantités sélectionnées
+    const [quantities, setQuantities] = useState({});
+    const [added, setAdded] = useState({});
     const { addToCart } = useContext(CartContext);
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
+    useEffect(() => { fetchProducts(); }, []);
 
     const fetchProducts = async () => {
         try {
             const response = await api.get('/products');
             setProducts(response.data);
-
-            // Initialise la quantité de chaque produit à 1
             const initialQuantities = {};
             response.data.forEach(p => initialQuantities[p.id] = 1);
             setQuantities(initialQuantities);
-        } catch (error) {
-            toast.error("Impossible de charger le catalogue.");
+        } catch {
+            toast.error('Impossible de charger le catalogue.');
         } finally {
             setLoading(false);
         }
@@ -34,70 +47,364 @@ export default function ProductList() {
         setQuantities(prev => ({ ...prev, [id]: isNaN(val) || val < 1 ? 1 : val }));
     };
 
+    const increment = (id) => setQuantities(prev => ({ ...prev, [id]: (prev[id] || 1) + 1 }));
+    const decrement = (id) => setQuantities(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) - 1) }));
+
+    const handleAddToCart = (product) => {
+        addToCart(product, quantities[product.id]);
+        setAdded(prev => ({ ...prev, [product.id]: true }));
+        setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1400);
+    };
+
     if (loading) {
-        return <div className="p-8 text-center text-gray-500">Chargement des produits...</div>;
+        return (
+            <>
+                <style>{baseStyles}</style>
+                <div className="vpl-loading">
+                    <div className="vpl-loading-inner">
+                        <div className="vpl-loading-dot" style={{ animationDelay: '0ms' }} />
+                        <div className="vpl-loading-dot" style={{ animationDelay: '150ms' }} />
+                        <div className="vpl-loading-dot" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <p className="vpl-loading-text">Chargement du catalogue…</p>
+                </div>
+            </>
+        );
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 min-h-screen bg-gray-50">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Notre Catalogue</h2>
+        <>
+            <style>{baseStyles}</style>
+            <div className="vpl-root">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {products.map((product) => (
-                    <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                        <div className="h-48 bg-gray-200 overflow-hidden relative">
-                            {product.imageUrl ? (
-                                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">Pas d'image</div>
-                            )}
-                            <span className="absolute top-2 right-2 bg-white/90 px-2 py-1 text-xs font-bold text-gray-700 rounded-md shadow-sm">
-                                {product.category?.name}
-                            </span>
+                {/* HEADER */}
+                <header className="vpl-header">
+                    <div className="vpl-eyebrow">Catalogue</div>
+                    <h1 className="vpl-title">Notre <em>Collection</em></h1>
+                    <p className="vpl-sub">{products.length} produit{products.length !== 1 ? 's' : ''} disponible{products.length !== 1 ? 's' : ''}</p>
+                </header>
+
+                <div className="vpl-divider" />
+
+                {/* GRID */}
+                {products.length === 0 ? (
+                    <div className="vpl-empty">
+                        <div className="vpl-empty-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            </svg>
                         </div>
-
-                        <div className="p-4 flex-1 flex flex-col">
-                            <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{product.name}</h3>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2 flex-1">{product.description}</p>
-
-                            <div className="mt-4 flex items-center justify-between">
-                                <span className="text-xl font-extrabold text-blue-600">{product.price.toFixed(2)} €</span>
-                                {/* MASQUAGE DU STOCK EXACT */}
-                                <span className={`text-xs font-bold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {product.stock > 0 ? 'En stock' : 'Rupture'}
-                                </span>
-                            </div>
-
-                            {/* CONTRÔLE DE QUANTITÉ AVANT AJOUT */}
-                            <div className="mt-4 flex gap-2">
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={quantities[product.id] || 1}
-                                    onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                                    disabled={product.stock < 1}
-                                    className="w-16 px-2 py-2 border border-gray-300 rounded-lg text-center outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                                />
-                                <button
-                                    onClick={() => addToCart(product, quantities[product.id])}
-                                    disabled={product.stock < 1}
-                                    className={`flex-1 py-2 rounded-lg font-bold transition-colors ${
-                                        product.stock < 1
-                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-gray-900 hover:bg-blue-600 text-white shadow-sm'
-                                    }`}
-                                >
-                                    {product.stock < 1 ? 'Rupture' : 'Ajouter 🛒'}
-                                </button>
-                            </div>
-                        </div>
+                        <p className="vpl-empty-text">Aucun produit disponible pour le moment.</p>
                     </div>
-                ))}
-            </div>
+                ) : (
+                    <div className="vpl-grid">
+                        {products.map((product) => {
+                            const inStock = product.stock > 0;
+                            const isAdded = added[product.id];
+                            const qty = quantities[product.id] || 1;
 
-            {products.length === 0 && (
-                <div className="text-center py-12 text-gray-500">Aucun produit disponible pour le moment.</div>
-            )}
-        </div>
+                            return (
+                                <div key={product.id} className="vpl-card">
+                                    {/* IMAGE */}
+                                    <div className="vpl-card-img">
+                                        {product.imageUrl ? (
+                                            <img src={product.imageUrl} alt={product.name} className="vpl-img" />
+                                        ) : (
+                                            <div className="vpl-img-placeholder">
+                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.25 }}>
+                                                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                                                    <polyline points="21 15 16 10 5 21"/>
+                                                </svg>
+                                            </div>
+                                        )}
+                                        {product.category?.name && (
+                                            <span className="vpl-cat-badge">{product.category.name}</span>
+                                        )}
+                                        {!inStock && (
+                                            <div className="vpl-out-overlay">Rupture de stock</div>
+                                        )}
+                                    </div>
+
+                                    {/* BODY */}
+                                    <div className="vpl-card-body">
+                                        <h3 className="vpl-product-name">{product.name}</h3>
+                                        <p className="vpl-product-desc">{product.description}</p>
+
+                                        <div className="vpl-price-row">
+                                            <span className="vpl-price">{product.price.toFixed(2)} €</span>
+                                            <span className={`vpl-stock-badge ${inStock ? 'in' : 'out'}`}>
+                                                {inStock ? 'En stock' : 'Rupture'}
+                                            </span>
+                                        </div>
+
+                                        {/* QUANTITY + ADD */}
+                                        <div className="vpl-actions">
+                                            <div className={`vpl-qty${!inStock ? ' disabled' : ''}`}>
+                                                <button
+                                                    className="vpl-qty-btn"
+                                                    onClick={() => decrement(product.id)}
+                                                    disabled={!inStock || qty <= 1}
+                                                    aria-label="Diminuer"
+                                                >
+                                                    <MinusIcon />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={qty}
+                                                    onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                                                    disabled={!inStock}
+                                                    className="vpl-qty-input"
+                                                />
+                                                <button
+                                                    className="vpl-qty-btn"
+                                                    onClick={() => increment(product.id)}
+                                                    disabled={!inStock}
+                                                    aria-label="Augmenter"
+                                                >
+                                                    <PlusIcon />
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleAddToCart(product)}
+                                                disabled={!inStock}
+                                                className={`vpl-add-btn${!inStock ? ' disabled' : ''}${isAdded ? ' added' : ''}`}
+                                            >
+                                                {isAdded ? (
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="20 6 9 17 4 12"/>
+                                                    </svg>
+                                                ) : (
+                                                    <CartIcon />
+                                                )}
+                                                <span>{!inStock ? 'Indisponible' : isAdded ? 'Ajouté !' : 'Ajouter'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </>
     );
 }
+
+const baseStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+    :root {
+        --cream: #F5F0E8;
+        --sand: #E8DDD0;
+        --bark: #B8A898;
+        --earth: #6B5B4E;
+        --charcoal: #2A2420;
+        --black: #0F0D0C;
+        --accent: #C8472A;
+        --gold: #C9A96E;
+        --white: #FDFAF7;
+    }
+
+    .vpl-root {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2.5rem 0;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    /* HEADER */
+    .vpl-header { margin-bottom: 2rem; }
+    .vpl-eyebrow {
+        font-size: 0.65rem; letter-spacing: 0.24em; text-transform: uppercase;
+        color: var(--gold); margin-bottom: 0.55rem;
+    }
+    .vpl-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.2rem; color: var(--black); line-height: 1.15;
+        margin-bottom: 0.35rem;
+    }
+    .vpl-title em { font-style: italic; color: var(--earth); }
+    .vpl-sub { font-size: 0.85rem; color: var(--bark); font-weight: 300; }
+    .vpl-divider { height: 1px; background: var(--sand); margin-bottom: 2.5rem; }
+
+    /* GRID */
+    .vpl-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    /* CARD */
+    .vpl-card {
+        background: var(--white);
+        border: 1px solid rgba(184,168,152,0.28);
+        border-radius: 3px;
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
+    }
+    .vpl-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(42,36,32,0.09);
+        border-color: var(--bark);
+    }
+
+    /* IMAGE */
+    .vpl-card-img {
+        position: relative;
+        height: 200px;
+        background: var(--cream);
+        overflow: hidden;
+    }
+    .vpl-img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.45s ease;
+    }
+    .vpl-card:hover .vpl-img { transform: scale(1.04); }
+    .vpl-img-placeholder {
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--sand);
+        color: var(--bark);
+    }
+    .vpl-cat-badge {
+        position: absolute; top: 10px; left: 10px;
+        font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase;
+        background: rgba(253,250,247,0.92);
+        color: var(--earth); font-weight: 500;
+        padding: 0.3rem 0.7rem; border-radius: 2px;
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(184,168,152,0.25);
+    }
+    .vpl-out-overlay {
+        position: absolute; inset: 0;
+        background: rgba(245,240,232,0.75);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--earth); font-weight: 500;
+        backdrop-filter: blur(2px);
+    }
+
+    /* CARD BODY */
+    .vpl-card-body {
+        padding: 1.2rem 1.2rem 1.4rem;
+        display: flex; flex-direction: column; flex: 1;
+    }
+    .vpl-product-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1rem; color: var(--black);
+        line-height: 1.3; margin-bottom: 0.45rem;
+        display: -webkit-box; -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vpl-product-desc {
+        font-size: 0.78rem; color: var(--earth); font-weight: 300;
+        line-height: 1.6; flex: 1; margin-bottom: 1rem;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vpl-price-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 1rem;
+    }
+    .vpl-price {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.25rem; color: var(--black); font-weight: 700;
+    }
+    .vpl-stock-badge {
+        font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+        font-weight: 500; padding: 0.28rem 0.65rem; border-radius: 2px;
+    }
+    .vpl-stock-badge.in { background: #EAF3DE; color: #3B6D11; }
+    .vpl-stock-badge.out { background: #FCEBEB; color: #A32D2D; }
+
+    /* QUANTITY + ADD */
+    .vpl-actions { display: flex; gap: 8px; align-items: stretch; }
+
+    .vpl-qty {
+        display: flex; align-items: center;
+        border: 1px solid var(--sand); border-radius: 2px;
+        background: var(--cream); overflow: hidden;
+    }
+    .vpl-qty.disabled { opacity: 0.45; }
+    .vpl-qty-btn {
+        width: 30px; height: 36px;
+        background: transparent; border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--earth);
+        transition: background 0.15s;
+    }
+    .vpl-qty-btn:hover:not(:disabled) { background: var(--sand); }
+    .vpl-qty-btn:disabled { cursor: not-allowed; opacity: 0.4; }
+    .vpl-qty-input {
+        width: 36px; height: 36px;
+        border: none; background: transparent;
+        text-align: center; outline: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.85rem; color: var(--charcoal);
+        -moz-appearance: textfield;
+    }
+    .vpl-qty-input::-webkit-outer-spin-button,
+    .vpl-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .vpl-add-btn {
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        padding: 0 1rem; height: 36px;
+        background: var(--charcoal); color: var(--white);
+        border: none; border-radius: 2px; cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.73rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+        transition: background 0.18s, transform 0.12s;
+        white-space: nowrap;
+    }
+    .vpl-add-btn:hover:not(.disabled):not(.added) {
+        background: var(--black); transform: translateY(-1px);
+    }
+    .vpl-add-btn.added { background: #3B6D11; }
+    .vpl-add-btn.disabled {
+        background: var(--sand); color: var(--bark); cursor: not-allowed;
+    }
+
+    /* EMPTY */
+    .vpl-empty {
+        text-align: center; padding: 5rem 0;
+    }
+    .vpl-empty-icon {
+        width: 64px; height: 64px; border-radius: 50%;
+        background: var(--sand);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.2rem; color: var(--bark);
+    }
+    .vpl-empty-text {
+        font-size: 0.9rem; color: var(--bark); font-weight: 300;
+    }
+
+    /* LOADING */
+    .vpl-loading {
+        min-height: calc(100vh - 68px);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: var(--cream);
+        font-family: 'DM Sans', sans-serif;
+    }
+    .vpl-loading-inner { display: flex; gap: 8px; margin-bottom: 1.2rem; }
+    .vpl-loading-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--gold);
+        animation: vpl-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes vpl-pulse {
+        0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+    .vpl-loading-text {
+        font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--bark);
+    }
+
+    @media (max-width: 1024px) { .vpl-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px)  { .vpl-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px)  { .vpl-grid { grid-template-columns: 1fr; } }
+`;

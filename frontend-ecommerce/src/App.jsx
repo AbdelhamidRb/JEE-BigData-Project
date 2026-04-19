@@ -14,6 +14,7 @@ import UsersManagement from './components/UsersManagement';
 import AdminLayout from './components/AdminLayout';
 import Home from './components/Home';
 import ProductList from './components/ProductList';
+import Apropos from './components/Apropos';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import CategoryManagement from './components/CategoryManagement';
@@ -33,12 +34,21 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
+
               {/* Route protégée : Utilisateur Standard (Catalogue des produits) */}
               <Route path="/dashboard" element={<PrivateRoute><ProductList /></PrivateRoute>} />
               <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} /> {/* <-- ICI */}
 
               {/* NOUVELLE ROUTE : Checkout */}
               <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+
+              {/* Produits route (alias to catalogue) */}
+              <Route path="/produits" element={<PrivateRoute><ProductList /></PrivateRoute>} />
+
+              {/* Apropos route (case-insensitive alias) */}
+              <Route path="/apropos" element={<Apropos />} />
+              <Route path="/Apropos" element={<Navigate to="/apropos" />} />
+
 
 
               {/* Routes protégées : ADMIN (Utilisation du Layout) */}
@@ -50,6 +60,7 @@ function App() {
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="orders" element={<OrderManagement />} />
               </Route>
+
             </Routes>
           </Router>
       </CartProvider>

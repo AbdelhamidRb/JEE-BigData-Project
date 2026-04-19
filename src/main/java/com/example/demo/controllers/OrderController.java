@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/orders")
+//@RequestMapping("/api/admin/orders") // Verify this matches your React call exactly
 @CrossOrigin("*")
+//@CrossOrigin(origins = "http://localhost:9595", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS})
 public class OrderController {
 
     @Autowired private OrderRepository orderRepository;
