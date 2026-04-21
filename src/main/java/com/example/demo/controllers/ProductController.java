@@ -55,6 +55,13 @@ public class ProductController {
         return ResponseEntity.ok(isAdmin ? productRepository.findAll() : productRepository.findByIsActiveTrue());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/admin/all")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<Product>> getAllProductsForAdmin() {

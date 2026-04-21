@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { CartContext } from '../context/CartContext';
 import toast from 'react-hot-toast';
@@ -106,7 +107,7 @@ export default function ProductList() {
                             return (
                                 <div key={product.id} className="vpl-card">
                                     {/* IMAGE */}
-                                    <div className="vpl-card-img">
+                                    <Link to={`/produit/${product.id}`} className="vpl-card-img">
                                         {product.imageUrl ? (
                                             <img src={product.imageUrl} alt={product.name} className="vpl-img" />
                                         ) : (
@@ -123,11 +124,11 @@ export default function ProductList() {
                                         {!inStock && (
                                             <div className="vpl-out-overlay">Rupture de stock</div>
                                         )}
-                                    </div>
+                                    </Link>
 
                                     {/* BODY */}
                                     <div className="vpl-card-body">
-                                        <h3 className="vpl-product-name">{product.name}</h3>
+                                        <Link to={`/produit/${product.id}`} className="vpl-product-name">{product.name}</Link>
                                         <p className="vpl-product-desc">{product.description}</p>
 
                                         <div className="vpl-price-row">
@@ -298,7 +299,10 @@ const baseStyles = `
         line-height: 1.3; margin-bottom: 0.45rem;
         display: -webkit-box; -webkit-line-clamp: 1;
         -webkit-box-orient: vertical; overflow: hidden;
+        text-decoration: none;
+        transition: color 0.2s;
     }
+    .vpl-product-name:hover { color: var(--earth); }
     .vpl-product-desc {
         font-size: 0.78rem; color: var(--earth); font-weight: 300;
         line-height: 1.6; flex: 1; margin-bottom: 1rem;

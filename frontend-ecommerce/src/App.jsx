@@ -13,6 +13,7 @@ import UsersManagement from './components/UsersManagement';
 import AdminLayout from './components/AdminLayout';
 import Home from './components/Home';
 import ProductList from './components/ProductList';
+import ProductDetail from './components/ProductDetail';
 import Apropos from './components/Apropos';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
@@ -43,6 +44,7 @@ function App() {
 
               {/* Produits route (alias to catalogue) */}
               <Route path="/produits" element={<PrivateRoute><Navbar /><ProductList /></PrivateRoute>} />
+              <Route path="/produit/:id" element={<PrivateRoute><Navbar /><ProductDetail /></PrivateRoute>} />
 
               {/* Apropos route (case-insensitive alias) */}
               <Route path="/apropos" element={<><Navbar /><Apropos /></>} />
