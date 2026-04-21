@@ -22,6 +22,7 @@ import OrderManagement from './components/OrderManagement';
 import MyOrders from './components/MyOrders';
 import Profile from './components/Profile';
 import NotFound from './components/NotFound';
+import Unauthorized from './components/Unauthorized';
 
 function App() {
   return (
@@ -67,6 +68,9 @@ function App() {
 
               {/* 404 Not Found */}
               <Route path="*" element={<><Navbar /><NotFound /></>} />
+
+              {/* Unauthorized (403) */}
+              <Route path="/unauthorized" element={<><Navbar /><Unauthorized /></>} />
 
             </Routes>
           </Router>
