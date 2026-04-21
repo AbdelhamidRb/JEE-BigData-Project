@@ -97,7 +97,7 @@ export default function AdminLayout() {
 
                 .va-layout {
                     display: flex;
-                    min-height: calc(100vh - 68px);
+                    min-height: 100vh;
                     background: var(--cream);
                     font-family: 'DM Sans', sans-serif;
                 }
@@ -111,8 +111,8 @@ export default function AdminLayout() {
                     display: flex;
                     flex-direction: column;
                     position: sticky;
-                    top: 68px;
-                    height: calc(100vh - 68px);
+                    top: 0;
+                    height: 100vh;
                     overflow-y: auto;
                 }
 

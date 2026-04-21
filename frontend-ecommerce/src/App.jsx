@@ -7,7 +7,6 @@ import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Register from './components/Register';
-// On a retiré l'ancien 'Dashboard' qui ne sert plus
 import AdminDashboard from './components/AdminDashboard';
 import AdminProduct from './components/AdminProduct';
 import UsersManagement from './components/UsersManagement';
@@ -19,9 +18,7 @@ import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import CategoryManagement from './components/CategoryManagement';
 import OrderManagement from './components/OrderManagement';
-
 import MyOrders from './components/MyOrders';
-
 
 function App() {
   return (
@@ -29,27 +26,26 @@ function App() {
         <CartProvider>
           <Router>
             <Toaster position="top-right" />
-            <Navbar />
 
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<><Navbar /><Home /></>} />
+              <Route path="/login" element={<><Navbar /><Login /></>} />
+              <Route path="/register" element={<><Navbar /><Register /></>} />
 
 
               {/* Route protégée : Utilisateur Standard (Catalogue des produits) */}
-              <Route path="/dashboard" element={<PrivateRoute><ProductList /></PrivateRoute>} />
-              <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} /> {/* <-- ICI */}
-              <Route path="/mes-commandes" element={<PrivateRoute><MyOrders /></PrivateRoute>} />
+              <Route path="/dashboard" element={<PrivateRoute><Navbar /><ProductList /></PrivateRoute>} />
+              <Route path="/cart" element={<PrivateRoute><Navbar /><Cart /></PrivateRoute>} />
+              <Route path="/mes-commandes" element={<PrivateRoute><Navbar /><MyOrders /></PrivateRoute>} />
 
               {/* NOUVELLE ROUTE : Checkout */}
-              <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+              <Route path="/checkout" element={<PrivateRoute><Navbar /><Checkout /></PrivateRoute>} />
 
               {/* Produits route (alias to catalogue) */}
-              <Route path="/produits" element={<PrivateRoute><ProductList /></PrivateRoute>} />
+              <Route path="/produits" element={<PrivateRoute><Navbar /><ProductList /></PrivateRoute>} />
 
               {/* Apropos route (case-insensitive alias) */}
-              <Route path="/apropos" element={<Apropos />} />
+              <Route path="/apropos" element={<><Navbar /><Apropos /></>} />
               <Route path="/Apropos" element={<Navigate to="/apropos" />} />
 
 
