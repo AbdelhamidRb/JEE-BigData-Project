@@ -21,6 +21,7 @@ import CategoryManagement from './components/CategoryManagement';
 import OrderManagement from './components/OrderManagement';
 import MyOrders from './components/MyOrders';
 import Profile from './components/Profile';
+import NotFound from './components/NotFound';
 
 function App() {
   return (
@@ -63,6 +64,9 @@ function App() {
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="orders" element={<OrderManagement />} />
               </Route>
+
+              {/* 404 Not Found */}
+              <Route path="*" element={<><Navbar /><NotFound /></>} />
 
             </Routes>
           </Router>
