@@ -68,4 +68,10 @@ public class OrderController {
         User user = userRepository.findByEmail(auth.getName()).orElseThrow();
         return ResponseEntity.ok(orderRepository.findByUserOrderByIdDesc(user));
     }
+
+    // 3. Voir toutes les commandes (Admin)
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> getAllOrdersForAdmin() {
+        return ResponseEntity.ok(orderRepository.findAll());
+    }
 }
