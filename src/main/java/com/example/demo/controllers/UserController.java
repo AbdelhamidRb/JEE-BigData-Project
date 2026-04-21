@@ -1,19 +1,38 @@
 package com.example.demo.controllers;
 import com.example.demo.entities.User;
+import com.example.demo.dto.ProfileUpdateRequest;
 import com.example.demo.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*") // Adapter selon ton frontend
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(Authentication auth) {
+        return userService.findByEmail(auth.getName())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest request, Authentication auth) {
+        try {
+            User updated = userService.updateProfile(auth.getName(), request);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     // 1. Lister tous les utilisateurs
     @GetMapping

@@ -24,7 +24,7 @@ export default function Login() {
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', role);
-            login(role);
+            login({ role, email });
             toast.success('Bienvenue !', { id: loadingToast });
             navigate(role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
         } catch (error) {

@@ -54,12 +54,12 @@ public class SecurityConfig {
                         // 2. Vos routes publiques
                         .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
 
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/orders/**").hasRole("ADMIN")
-                        .requestMatchers("/api/orders/admin/**").hasRole("ADMIN")
+                        // User routes
+                        .requestMatchers("/api/users/me").authenticated()
+                        .requestMatchers("/api/users").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                        // Order routes
                         .requestMatchers("/api/orders/**").authenticated()
                         .anyRequest().authenticated()
                 )

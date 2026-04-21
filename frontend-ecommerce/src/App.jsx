@@ -20,6 +20,7 @@ import Checkout from './components/Checkout';
 import CategoryManagement from './components/CategoryManagement';
 import OrderManagement from './components/OrderManagement';
 import MyOrders from './components/MyOrders';
+import Profile from './components/Profile';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
               <Route path="/dashboard" element={<PrivateRoute><Navbar /><ProductList /></PrivateRoute>} />
               <Route path="/cart" element={<PrivateRoute><Navbar /><Cart /></PrivateRoute>} />
               <Route path="/mes-commandes" element={<PrivateRoute><Navbar /><MyOrders /></PrivateRoute>} />
+              <Route path="/profil" element={<PrivateRoute><Navbar /><Profile /></PrivateRoute>} />
 
               {/* NOUVELLE ROUTE : Checkout */}
               <Route path="/checkout" element={<PrivateRoute><Navbar /><Checkout /></PrivateRoute>} />

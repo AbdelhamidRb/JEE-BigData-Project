@@ -2,12 +2,15 @@ package com.example.demo.services;
 
 import com.example.demo.entities.Role;
 import com.example.demo.entities.User;
+import com.example.demo.dto.ProfileUpdateRequest;
 import com.example.demo.repositories.RoleRepository;
 import com.example.demo.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -16,7 +19,10 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository; // Nécessaire pour chercher le rôle
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<User> findAllUsers() {
         return userRepository.findAll();
@@ -52,5 +58,35 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
         user.setActive(true); // On réactive le compte
         userRepository.save(user);
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    public User updateProfile(String email, ProfileUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getCity() != null) {
+            user.setCity(request.getCity());
+        }
+        if (request.getState() != null) {
+            user.setState(request.getState());
+        }
+        if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
+            if (request.getCurrentPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                throw new RuntimeException("Mot de passe actuel incorrect");
+            }
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+
+        return userRepository.save(user);
     }
 }

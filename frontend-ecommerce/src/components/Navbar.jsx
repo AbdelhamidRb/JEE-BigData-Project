@@ -163,7 +163,8 @@ export default function Navbar() {
                         <ul className="vn-links">
                             <li><Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link></li>
                             <li><Link to="/produits" className={isActive('/produits') ? 'active' : ''}>Catalogue</Link></li>
-                            <Link to="/mes-commandes" className="vn-link" style={{ marginRight: '1rem' }}>Mes Commandes</Link>
+                            <li><Link to="/mes-commandes" className={isActive('/mes-commandes') ? 'active' : ''}>Mes Commandes</Link></li>
+                            <li><Link to="/profil" className={isActive('/profil') ? 'active' : ''}>Profil</Link></li>
                             <li><Link to="/apropos" className={isActive('/apropos') ? 'active' : ''}>À Propos</Link></li>
                         </ul>
                     )}
