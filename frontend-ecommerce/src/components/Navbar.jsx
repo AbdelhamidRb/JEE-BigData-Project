@@ -156,7 +156,7 @@ export default function Navbar() {
                 <div className="vn-inner">
 
                     {/* LOGO — always */}
-                    <Link to="/" className="vn-logo">VAUX</Link>
+                    <Link to="/" className="vn-logo">InsightCart</Link>
 
                     {/* CENTER LINKS — regular users only */}
                     {isRegularUser && (

@@ -224,7 +224,7 @@ export default function AdminLayout() {
                 {/* SIDEBAR */}
                 <aside className="va-sidebar">
                     <div className="va-sidebar-top">
-                        <Link to="/" className="va-sidebar-logo">VAUX</Link>
+                        <Link to="/" className="va-sidebar-logo">InsightCart</Link>
                         <div className="va-sidebar-role">Panneau Admin</div>
                     </div>
 

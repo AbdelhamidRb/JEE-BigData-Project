@@ -101,20 +101,20 @@ export default function APropos() {
                         <div className="vap-hero-circle c1" />
                         <div className="vap-hero-circle c2" />
                         <div className="vap-hero-circle c3" />
-                        <div className="vap-hero-decor">VAUX</div>
+                        <div className="vap-hero-decor">InsightCart</div>
                     </div>
                     <div className="vap-hero-content">
-                        <p className="vap-eyebrow" style={fade(100)}>À Propos de VAUX</p>
+                        <p className="vap-eyebrow" style={fade(100)}>À Propos de InsightCart</p>
                         <h1 className="vap-hero-title" style={fade(260)}>
                             L'excellence<br />
                             <em>au quotidien.</em>
                         </h1>
                         <p className="vap-hero-desc" style={fade(420)}>
-                            VAUX est né d'une conviction simple : les objets du quotidien méritent d'être beaux, durables et pensés avec soin. Depuis 2019, nous sélectionnons les meilleures créations à travers le monde pour les mettre à portée de tous.
+                            InsightCart est né d'une conviction simple : les objets du quotidien méritent d'être beaux, durables et pensés avec soin. Depuis 2019, nous sélectionnons les meilleures créations à travers le monde pour les mettre à portée de tous.
                         </p>
                         <div style={fade(560)} className="vap-hero-actions">
                             <Link to="/dashboard" className="vap-btn-primary">Découvrir la boutique</Link>
-                            <Link to="/register" className="vap-btn-ghost">Rejoindre VAUX</Link>
+                            <Link to="/register" className="vap-btn-ghost">Rejoindre InsightCart</Link>
                         </div>
                     </div>
                 </section>
@@ -143,10 +143,10 @@ export default function APropos() {
                                 Tout a commencé dans un appartement parisien, autour d'une frustration partagée : impossible de trouver des produits à la fois bien faits, esthétiques et accessibles. Les grandes marques surfacturaient le logo. Les alternatives bon marché sacrifiaient la qualité. Il manquait quelque chose entre les deux.
                             </p>
                             <p className="vap-body-text">
-                                Sophie Arnaud, ancienne directrice artistique, et Marc Renaud, expert en sourcing international, ont décidé de combler ce vide. VAUX est le résultat de trois ans de voyages, de rencontres avec des artisans, et d'un processus de sélection implacable.
+                                Sophie Arnaud, ancienne directrice artistique, et Marc Renaud, expert en sourcing international, ont décidé de combler ce vide. InsightCart est le résultat de trois ans de voyages, de rencontres avec des artisans, et d'un processus de sélection implacable.
                             </p>
                             <p className="vap-body-text">
-                                Aujourd'hui, chaque produit que vous trouvez sur VAUX a été tenu en main, testé, questionné. Rien n'entre dans notre catalogue par hasard.
+                                Aujourd'hui, chaque produit que vous trouvez sur InsightCart a été tenu en main, testé, questionné. Rien n'entre dans notre catalogue par hasard.
                             </p>
                         </div>
                     </div>
@@ -186,7 +186,7 @@ export default function APropos() {
                 <section className="vap-section vap-team-section">
                     <div className="vap-section-header vap-reveal">
                         <div className="vap-section-eyebrow">L'Équipe</div>
-                        <h2 className="vap-section-title-center">Les visages<br /><em>derrière VAUX</em></h2>
+                        <h2 className="vap-section-title-center">Les visages<br /><em>derrière InsightCart</em></h2>
                     </div>
                     <div className="vap-team-grid">
                         {TEAM.map((m, i) => (
@@ -206,7 +206,7 @@ export default function APropos() {
                     <div className="vap-cta-content">
                         <div className="vap-section-eyebrow" style={{ color: 'var(--gold)' }}>Rejoignez-nous</div>
                         <h2 className="vap-cta-title">
-                            Prêt à découvrir<br /><em>l'expérience VAUX ?</em>
+                            Prêt à découvrir<br /><em>l'expérience InsightCart ?</em>
                         </h2>
                         <p className="vap-cta-desc">
                             Des milliers de clients nous font confiance. Rejoignez la communauté et accédez à une sélection de produits premium livrés chez vous.

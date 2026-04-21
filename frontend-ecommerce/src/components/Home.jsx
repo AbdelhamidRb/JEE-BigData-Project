@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
-import Navbar from './Navbar';
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import api from '../api/axios';
+import { CartContext } from '../context/CartContext';
+import toast from 'react-hot-toast';
 
 const MARQUEE_ITEMS = [
     { text: 'Livraison Rapide 24/48h', accent: false },
@@ -13,30 +15,6 @@ const MARQUEE_ITEMS = [
     { text: '✦', accent: true },
     { text: 'Retours Gratuits 30 Jours', accent: false },
     { text: '✦', accent: true },
-];
-
-const CATEGORIES = [
-    {
-        name: 'Électronique',
-        sub: 'Smartphones, PC, Accessoires',
-        count: '240+ articles',
-        decor: '01',
-        bg: 'linear-gradient(160deg, #2C3D35 0%, #111A16 100%)',
-    },
-    {
-        name: 'Mode & Vêtements',
-        sub: 'Nouvelle collection hiver',
-        count: '180+ articles',
-        decor: '02',
-        bg: 'linear-gradient(160deg, #3D3028 0%, #1A120E 100%)',
-    },
-    {
-        name: 'Maison & Déco',
-        sub: 'Mobilier et aménagement',
-        count: '120+ articles',
-        decor: '03',
-        bg: 'linear-gradient(160deg, #2A3544 0%, #111820 100%)',
-    },
 ];
 
 const TRUST_ITEMS = [
@@ -73,18 +51,64 @@ const TRUST_ITEMS = [
 
 export default function Home() {
     const [visible, setVisible] = useState(false);
-    const heroRef = useRef(null);
+    const [categories, setCategories] = useState([]);
+    const [featuredProducts, setFeaturedProducts] = useState([]);
+    const [stats, setStats] = useState({ products: 0, orders: 0 });
+    const { addToCart } = useContext(CartContext);
 
     useEffect(() => {
         const t = setTimeout(() => setVisible(true), 80);
+        fetchData();
         return () => clearTimeout(t);
     }, []);
+
+    const fetchData = async () => {
+        try {
+            const [productsRes, categoriesRes] = await Promise.all([
+                api.get('/products'),
+                api.get('/categories')
+            ]);
+            
+            const products = productsRes.data || [];
+            const cats = categoriesRes.data || [];
+            
+            setCategories(cats.slice(0, 3));
+            setFeaturedProducts(products.slice(0, 4));
+            setStats({
+                products: products.length,
+                orders: 0
+            });
+        } catch (error) {
+            console.error('Error fetching home data:', error);
+            try {
+                const productsRes = await api.get('/products');
+                setFeaturedProducts(productsRes.data?.slice(0, 4) || []);
+                setStats({ products: productsRes.data?.length || 0, orders: 0 });
+            } catch (e) {
+                console.error('Error fetching products:', e);
+            }
+        }
+    };
+
+    const handleAddToCart = (product) => {
+        addToCart(product, 1);
+        toast.success(`${product.name} ajouté au panier`);
+    };
 
     const fadeStyle = (delay) => ({
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(28px)',
         transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`,
     });
+
+    const getCategoryBg = (index) => {
+        const bgs = [
+            'linear-gradient(160deg, #2C3D35 0%, #111A16 100%)',
+            'linear-gradient(160deg, #3D3028 0%, #1A120E 100%)',
+            'linear-gradient(160deg, #2A3544 0%, #111820 100%)',
+        ];
+        return bgs[index % bgs.length];
+    };
 
     return (
         <>
@@ -107,51 +131,12 @@ export default function Home() {
 
         .vaux-display { font-family: 'Playfair Display', Georgia, serif; }
 
-        /* NAV */
-        .vaux-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 1.1rem 3rem;
-          background: rgba(253,250,247,0.93);
-          backdrop-filter: blur(14px);
-          border-bottom: 1px solid rgba(184,168,152,0.3);
-        }
-        .vaux-nav-logo {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.55rem;
-          letter-spacing: 0.1em;
-          color: var(--black);
-          text-decoration: none;
-        }
-        .vaux-nav-links { display: flex; gap: 2.2rem; list-style: none; padding: 0; margin: 0; }
-        .vaux-nav-links a {
-          font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase;
-          color: var(--earth); text-decoration: none; transition: color 0.2s;
-        }
-        .vaux-nav-links a:hover { color: var(--black); }
-        .vaux-nav-actions { display: flex; gap: 1rem; align-items: center; }
-        .vaux-nav-btn {
-          font-size: 0.75rem; letter-spacing: 0.13em; text-transform: uppercase;
-          padding: 0.55rem 1.3rem; border-radius: 2px;
-          text-decoration: none; display: inline-block; cursor: pointer;
-          transition: background 0.2s, color 0.2s;
-        }
-        .vaux-nav-btn.ghost {
-          background: transparent; color: var(--charcoal);
-          border: 1px solid var(--bark);
-        }
-        .vaux-nav-btn.ghost:hover { border-color: var(--charcoal); color: var(--black); }
-        .vaux-nav-btn.solid {
-          background: var(--charcoal); color: var(--white); border: 1px solid var(--charcoal);
-        }
-        .vaux-nav-btn.solid:hover { background: var(--black); }
-
         /* HERO */
         .vaux-hero {
           min-height: 100vh;
           display: grid;
           grid-template-columns: 1fr 1fr;
-          padding-top: 0; /* avoid extra space under fixed navbar */
+          padding-top: 0;
         }
         .vaux-hero-left {
           background: var(--cream);
@@ -191,15 +176,6 @@ export default function Home() {
           display: inline-block; transition: background 0.2s, transform 0.15s;
         }
         .vaux-btn-primary:hover { background: var(--black); transform: translateY(-1px); }
-        .vaux-btn-ghost {
-          background: transparent; color: var(--charcoal);
-          padding: 1rem 2rem; font-family: 'DM Sans', sans-serif;
-          font-size: 0.78rem; letter-spacing: 0.15em; text-transform: uppercase;
-          border: 1px solid var(--bark); cursor: pointer; border-radius: 2px;
-          text-decoration: none; display: inline-block;
-          transition: border-color 0.2s, color 0.2s;
-        }
-        .vaux-btn-ghost:hover { border-color: var(--charcoal); color: var(--black); }
         .vaux-hero-stats {
           margin-top: 3.5rem; display: flex; gap: 2.8rem;
           position: relative; z-index: 1;
@@ -248,6 +224,50 @@ export default function Home() {
         }
         .vaux-product-price { font-size: 0.88rem; color: rgba(253,250,247,0.55); font-weight: 300; }
 
+        /* Featured Products Grid */
+        .vaux-hero-products {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 340px;
+        }
+        .vaux-hero-prod {
+            background: rgba(253,250,247,0.95);
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .vaux-hero-prod-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 3px;
+            background: var(--sand);
+        }
+        .vaux-hero-prod-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .vaux-hero-prod-name {
+            font-size: 0.7rem;
+            color: var(--charcoal);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .vaux-hero-prod-price {
+            font-size: 0.65rem;
+            color: var(--earth);
+        }
+
         /* MARQUEE */
         .vaux-marquee { background: var(--black); padding: 0.9rem 0; overflow: hidden; white-space: nowrap; }
         .vaux-marquee-inner { display: inline-block; animation: vaux-marquee 28s linear infinite; }
@@ -286,7 +306,7 @@ export default function Home() {
         }
         .vaux-trust-desc { font-size: 0.83rem; color: var(--earth); line-height: 1.65; font-weight: 300; }
 
-        /* CATEGORIES */
+        /* PRODUCTS SECTION */
         .vaux-section { padding: 5.5rem 5rem; }
         .vaux-section-header {
           display: flex; justify-content: space-between; align-items: flex-end;
@@ -304,6 +324,101 @@ export default function Home() {
           transition: color 0.2s;
         }
         .vaux-section-link:hover { color: var(--black); }
+        
+        .vaux-products-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .vaux-prod-card {
+            background: var(--white);
+            border: 1px solid rgba(184,168,152,0.28);
+            border-radius: 3px;
+            overflow: hidden;
+            transition: transform 0.22s, box-shadow 0.22s;
+        }
+        .vaux-prod-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(42,36,32,0.09);
+        }
+        .vaux-prod-img-wrap {
+            height: 180px;
+            background: var(--cream);
+            position: relative;
+            overflow: hidden;
+        }
+        .vaux-prod-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .vaux-prod-img-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bark);
+        }
+        .vaux-prod-cat {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 0.55rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            background: rgba(253,250,247,0.92);
+            color: var(--earth);
+            padding: 0.25rem 0.5rem;
+            border-radius: 2px;
+        }
+        .vaux-prod-body {
+            padding: 1rem;
+        }
+        .vaux-prod-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.95rem;
+            color: var(--black);
+            margin-bottom: 0.4rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .vaux-prod-desc {
+            font-size: 0.72rem;
+            color: var(--earth);
+            margin-bottom: 0.75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .vaux-prod-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vaux-prod-price {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--black);
+            font-weight: 700;
+        }
+        .vaux-prod-add {
+            padding: 0.4rem 0.8rem;
+            background: var(--charcoal);
+            color: var(--white);
+            border: none;
+            border-radius: 2px;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .vaux-prod-add:hover { background: var(--black); }
+
+        /* CATEGORIES */
         .vaux-cat-grid {
           display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
         }
@@ -337,8 +452,6 @@ export default function Home() {
 
         /* RESPONSIVE */
         @media (max-width: 1024px) {
-          .vaux-nav { padding: 1.1rem 1.5rem; }
-          .vaux-nav-links { display: none; }
           .vaux-hero { grid-template-columns: 1fr; }
           .vaux-hero-right { min-height: 300px; }
           .vaux-hero-left { padding: 3.5rem 2rem; }
@@ -347,20 +460,21 @@ export default function Home() {
           .vaux-section { padding: 4rem 1.5rem; }
           .vaux-cat-grid { grid-template-columns: 1fr 1fr; }
           .vaux-cat-grid > :last-child { grid-column: span 2; }
+          .vaux-products-grid { grid-template-columns: repeat(2, 1fr); }
+          .vaux-hero-products { position: relative; transform: none; top: auto; left: auto; }
         }
         @media (max-width: 640px) {
           .vaux-cat-grid { grid-template-columns: 1fr; }
           .vaux-cat-grid > :last-child { grid-column: span 1; }
           .vaux-hero-stats { gap: 1.8rem; }
           .vaux-ctas { flex-direction: column; align-items: flex-start; }
+          .vaux-products-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
-            { /* Navbar is provided by App.jsx for unified navigation across pages */ }
-
             {/* HERO */}
             <section className="vaux-hero">
-                <div className="vaux-hero-left" ref={heroRef}>
+                <div className="vaux-hero-left">
                     <p className="vaux-eyebrow" style={fadeStyle(100)}>Nouvelle Collection — Printemps 2026</p>
                     <h1 className="vaux-hero-title" style={fadeStyle(250)}>
                         La qualité<br /><em>premium</em><br />à portée de clic.
@@ -369,11 +483,11 @@ export default function Home() {
                         Des produits soigneusement sélectionnés pour répondre à vos exigences. Livraison rapide, retours gratuits, satisfaction garantie.
                     </p>
                     <div className="vaux-ctas" style={fadeStyle(540)}>
-                        <Link to="/dashboard" className="vaux-btn-primary">Voir les produits</Link>
+                        <Link to="/produits" className="vaux-btn-primary">Voir les produits</Link>
                     </div>
                     <div className="vaux-hero-stats" style={fadeStyle(680)}>
                         <div>
-                            <div className="vaux-stat-num">14k+</div>
+                            <div className="vaux-stat-num">{stats.products > 0 ? `${stats.products}+` : '14k+'}</div>
                             <div className="vaux-stat-label">Produits</div>
                         </div>
                         <div>
@@ -397,11 +511,30 @@ export default function Home() {
                         </svg>
                     </div>
                     <span className="vaux-hero-badge">Livraison offerte dès 80€</span>
-                    <div className="vaux-product-card">
-                        <div className="vaux-product-tag">Article vedette</div>
-                        <div className="vaux-product-name">Tote en cuir artisanal</div>
-                        <div className="vaux-product-price">À partir de 245€</div>
-                    </div>
+                    
+                    {featuredProducts.length > 0 ? (
+                        <div className="vaux-hero-products">
+                            {featuredProducts.slice(0, 4).map((product) => (
+                                <Link to={`/produit/${product.id}`} key={product.id} className="vaux-hero-prod">
+                                    {product.imageUrl ? (
+                                        <img src={product.imageUrl} alt={product.name} className="vaux-hero-prod-img" />
+                                    ) : (
+                                        <div className="vaux-hero-prod-img" style={{ background: 'var(--sand)' }} />
+                                    )}
+                                    <div className="vaux-hero-prod-info">
+                                        <div className="vaux-hero-prod-name">{product.name}</div>
+                                        <div className="vaux-hero-prod-price">{product.price?.toFixed(2)} €</div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="vaux-product-card">
+                            <div className="vaux-product-tag">Article vedette</div>
+                            <div className="vaux-product-name">Tote en cuir artisanal</div>
+                            <div className="vaux-product-price">À partir de 245€</div>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -427,27 +560,73 @@ export default function Home() {
                 ))}
             </div>
 
-            {/* CATEGORIES */}
-            <section className="vaux-section">
-                <div className="vaux-section-header">
-                    <h2 className="vaux-section-title">Catégories<br /><em>Populaires</em></h2>
-                    <Link to="/dashboard" className="vaux-section-link">Voir tout</Link>
-                </div>
-                <div className="vaux-cat-grid">
-                    {CATEGORIES.map((cat, i) => (
-                        <Link to="/dashboard" key={i} style={{ textDecoration: 'none' }}>
-                            <div className="vaux-cat-card">
-                                <div className="vaux-cat-bg" style={{ background: cat.bg }} />
-                                <div className="vaux-cat-decor">{cat.decor}</div>
-                                <div className="vaux-cat-info">
-                                    <div className="vaux-cat-count">{cat.count}</div>
-                                    <div className="vaux-cat-name">{cat.name}</div>
+            {/* FEATURED PRODUCTS */}
+            {featuredProducts.length > 0 && (
+                <section className="vaux-section">
+                    <div className="vaux-section-header">
+                        <h2 className="vaux-section-title">Produits<br /><em>Populaires</em></h2>
+                        <Link to="/produits" className="vaux-section-link">Voir tout</Link>
+                    </div>
+                    <div className="vaux-products-grid">
+                        {featuredProducts.slice(0, 8).map((product) => (
+                            <div key={product.id} className="vaux-prod-card">
+                                <Link to={`/produit/${product.id}`} className="vaux-prod-img-wrap">
+                                    {product.imageUrl ? (
+                                        <img src={product.imageUrl} alt={product.name} className="vaux-prod-img" />
+                                    ) : (
+                                        <div className="vaux-prod-img-placeholder">
+                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                                                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                                                <polyline points="21 15 16 10 5 21"/>
+                                            </svg>
+                                        </div>
+                                    )}
+                                    {product.category?.name && (
+                                        <span className="vaux-prod-cat">{product.category.name}</span>
+                                    )}
+                                </Link>
+                                <div className="vaux-prod-body">
+                                    <Link to={`/produit/${product.id}`} className="vaux-prod-name">{product.name}</Link>
+                                    <p className="vaux-prod-desc">{product.description}</p>
+                                    <div className="vaux-prod-footer">
+                                        <span className="vaux-prod-price">{product.price?.toFixed(2)} €</span>
+                                        <button 
+                                            className="vaux-prod-add"
+                                            onClick={() => handleAddToCart(product)}
+                                        >
+                                            Ajouter
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </Link>
-                    ))}
-                </div>
-            </section>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* CATEGORIES */}
+            {categories.length > 0 && (
+                <section className="vaux-section">
+                    <div className="vaux-section-header">
+                        <h2 className="vaux-section-title">Catégories<br /><em>Populaires</em></h2>
+                        <Link to="/produits" className="vaux-section-link">Voir tout</Link>
+                    </div>
+                    <div className="vaux-cat-grid">
+                        {categories.map((cat, i) => (
+                            <Link to={`/produits?category=${cat.id}`} key={cat.id} style={{ textDecoration: 'none' }}>
+                                <div className="vaux-cat-card">
+                                    <div className="vaux-cat-bg" style={{ background: getCategoryBg(i) }} />
+                                    <div className="vaux-cat-decor">0{i + 1}</div>
+                                    <div className="vaux-cat-info">
+                                        <div className="vaux-cat-count">{cat.productCount || cat.products?.length || 0} articles</div>
+                                        <div className="vaux-cat-name">{cat.name}</div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
         </>
     );
 }

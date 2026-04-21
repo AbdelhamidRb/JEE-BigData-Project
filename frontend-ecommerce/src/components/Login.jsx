@@ -242,7 +242,7 @@ export default function Login() {
                     <div className="vl-panel-circle c1" />
                     <div className="vl-panel-circle c2" />
                     <div className="vl-panel-circle c3" />
-                    <div className="vl-panel-decor">VAUX</div>
+                    <div className="vl-panel-decor">InsightCart</div>
                     <div className="vl-panel-content">
                         <div className="vl-panel-tag">Espace membre</div>
                         <h2 className="vl-panel-title">
@@ -271,7 +271,7 @@ export default function Login() {
                 {/* RIGHT FORM PANEL */}
                 <div className="vl-form-side">
                     <div className="vl-form-wrap">
-                        <Link to="/" className="vl-logo">VAUX</Link>
+                        <Link to="/" className="vl-logo">InsightCart</Link>
 
                         <p className="vl-form-eyebrow">Connexion</p>
                         <h1 className="vl-form-title">

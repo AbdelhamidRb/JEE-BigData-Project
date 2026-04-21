@@ -206,7 +206,7 @@ export default function Register() {
                 {/* FORM PANEL — LEFT */}
                 <div className="vr-form-side">
                     <div className="vr-form-wrap">
-                        <Link to="/" className="vr-logo">VAUX</Link>
+                        <Link to="/" className="vr-logo">InsightCart</Link>
 
                         <p className="vr-form-eyebrow">Inscription</p>
                         <h1 className="vr-form-title">
@@ -288,7 +288,7 @@ export default function Register() {
                 <div className="vr-panel">
                     <div className="vr-panel-blob b1" />
                     <div className="vr-panel-blob b2" />
-                    <div className="vr-panel-decor">VAUX</div>
+                    <div className="vr-panel-decor">InsightCart</div>
                     <div className="vr-panel-content">
                         <div className="vr-panel-tag">Avantages membres</div>
                         <h2 className="vr-panel-title">
