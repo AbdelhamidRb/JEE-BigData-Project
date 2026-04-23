@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect, useContext } from 'react';
 import api from '../api/axios';
 import { CartContext } from '../context/CartContext';
+import { WishlistContext } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const MARQUEE_ITEMS = [
@@ -55,6 +56,7 @@ export default function Home() {
     const [featuredProducts, setFeaturedProducts] = useState([]);
     const [stats, setStats] = useState({ products: 0, orders: 0 });
     const { addToCart } = useContext(CartContext);
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useContext(WishlistContext);
 
     useEffect(() => {
         const t = setTimeout(() => setVisible(true), 80);
@@ -93,6 +95,14 @@ export default function Home() {
     const handleAddToCart = (product) => {
         addToCart(product, 1);
         toast.success(`${product.name} ajouté au panier`);
+    };
+
+    const handleWishlistToggle = async (product) => {
+        if (isInWishlist(product.id)) {
+            await removeFromWishlist(product.id);
+        } else {
+            await addToWishlist(product.id);
+        }
     };
 
     const fadeStyle = (delay) => ({
@@ -404,8 +414,7 @@ export default function Home() {
             color: var(--black);
             font-weight: 700;
         }
-        .vaux-prod-add {
-            padding: 0.4rem 0.8rem;
+        .vaux-prod-add { padding: 0.4rem 0.8rem;
             background: var(--charcoal);
             color: var(--white);
             border: none;
@@ -417,6 +426,22 @@ export default function Home() {
             transition: background 0.2s;
         }
         .vaux-prod-add:hover { background: var(--black); }
+
+        .vaux-prod-wishlist {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--cream);
+            border: 1px solid var(--sand);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 4px;
+        }
+        .vaux-prod-wishlist:hover { background: var(--sand); }
+        .vaux-prod-wishlist.active { background: #FCEBEB; border-color: #C8472A; }
 
         /* CATEGORIES */
         .vaux-cat-grid {
@@ -595,6 +620,15 @@ export default function Home() {
                                             onClick={() => handleAddToCart(product)}
                                         >
                                             Ajouter
+                                        </button>
+                                        <button 
+                                            className={`vaux-prod-wishlist ${isInWishlist(product.id) ? 'active' : ''}`}
+                                            onClick={() => handleWishlistToggle(product)}
+                                            title={isInWishlist(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? '#C8472A' : 'none'} stroke="currentColor" strokeWidth="2">
+                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                            </svg>
                                         </button>
                                     </div>
                                 </div>

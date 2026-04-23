@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import PrivateRoute from './components/PrivateRoute';
 
 import Navbar from './components/Navbar';
@@ -21,6 +22,7 @@ import CategoryManagement from './components/CategoryManagement';
 import OrderManagement from './components/OrderManagement';
 import MyOrders from './components/MyOrders';
 import Profile from './components/Profile';
+import Wishlist from './components/Wishlist';
 import NotFound from './components/NotFound';
 import Unauthorized from './components/Unauthorized';
 
@@ -28,7 +30,8 @@ function App() {
   return (
     <AuthProvider>
         <CartProvider>
-          <Router>
+          <WishlistProvider>
+            <Router>
             <Toaster position="top-right" />
 
             <Routes>
@@ -40,6 +43,7 @@ function App() {
               {/* Route protégée : Utilisateur Standard (Catalogue des produits) */}
               <Route path="/dashboard" element={<PrivateRoute><Navbar /><ProductList /></PrivateRoute>} />
               <Route path="/cart" element={<PrivateRoute><Navbar /><Cart /></PrivateRoute>} />
+              <Route path="/wishlist" element={<PrivateRoute><Navbar /><Wishlist /></PrivateRoute>} />
               <Route path="/mes-commandes" element={<PrivateRoute><Navbar /><MyOrders /></PrivateRoute>} />
               <Route path="/profil" element={<PrivateRoute><Navbar /><Profile /></PrivateRoute>} />
 
@@ -73,9 +77,10 @@ function App() {
               <Route path="/unauthorized" element={<><Navbar /><Unauthorized /></>} />
 
             </Routes>
-          </Router>
-      </CartProvider>
-    </AuthProvider>
+</Router>
+            </WishlistProvider>
+          </CartProvider>
+      </AuthProvider>
   );
 }
 

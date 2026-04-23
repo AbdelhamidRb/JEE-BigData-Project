@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { CartContext } from '../context/CartContext';
+import { WishlistContext } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const CartIcon = () => (
@@ -26,6 +27,7 @@ export default function ProductList() {
     const [quantities, setQuantities] = useState({});
     const [added, setAdded] = useState({});
     const { addToCart } = useContext(CartContext);
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useContext(WishlistContext);
 
     useEffect(() => { fetchProducts(); }, []);
 
@@ -55,6 +57,14 @@ export default function ProductList() {
         addToCart(product, quantities[product.id]);
         setAdded(prev => ({ ...prev, [product.id]: true }));
         setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1400);
+    };
+
+    const handleWishlistToggle = async (product) => {
+        if (isInWishlist(product.id)) {
+            await removeFromWishlist(product.id);
+        } else {
+            await addToWishlist(product.id);
+        }
     };
 
     if (loading) {
@@ -180,6 +190,15 @@ export default function ProductList() {
                                                     <CartIcon />
                                                 )}
                                                 <span>{!inStock ? 'Indisponible' : isAdded ? 'Ajouté !' : 'Ajouter'}</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleWishlistToggle(product)}
+                                                className={`vpl-wishlist-btn${isInWishlist(product.id) ? ' active' : ''}`}
+                                                title={isInWishlist(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? '#C8472A' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                                </svg>
                                             </button>
                                         </div>
                                     </div>
@@ -369,6 +388,27 @@ const baseStyles = `
     .vpl-add-btn.added { background: #3B6D11; }
     .vpl-add-btn.disabled {
         background: var(--sand); color: var(--bark); cursor: not-allowed;
+    }
+
+    .vpl-wishlist-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--cream);
+        border: 1px solid var(--sand);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .vpl-wishlist-btn:hover {
+        background: var(--sand);
+        transform: translateY(-1px);
+    }
+    .vpl-wishlist-btn.active {
+        background: #FCEBEB;
+        border-color: #C8472A;
     }
 
     /* EMPTY */

@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { CartContext } from '../context/CartContext';
+import { WishlistContext } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 
 export default function ProductDetail() {
@@ -12,6 +13,7 @@ export default function ProductDetail() {
     const [selectedImage, setSelectedImage] = useState(0);
     const [added, setAdded] = useState(false);
     const { addToCart } = useContext(CartContext);
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useContext(WishlistContext);
 
     useEffect(() => {
         fetchProduct();
@@ -32,6 +34,14 @@ export default function ProductDetail() {
         addToCart(product, quantity);
         setAdded(true);
         setTimeout(() => setAdded(false), 1500);
+    };
+
+    const handleWishlistToggle = async (productId) => {
+        if (isInWishlist(productId)) {
+            await removeFromWishlist(productId);
+        } else {
+            await addToWishlist(productId);
+        }
     };
 
     const increment = () => setQuantity(q => Math.min(q + 1, product?.stock || 1));
@@ -152,6 +162,15 @@ export default function ProductDetail() {
                                         Ajouter au panier
                                     </>
                                 )}
+                            </button>
+                            <button 
+                                onClick={() => handleWishlistToggle(product.id)}
+                                className={`vpd-wishlist-btn ${isInWishlist(product.id) ? 'active' : ''}`}
+                                title={isInWishlist(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? '#C8472A' : 'none'} stroke="currentColor" strokeWidth="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                </svg>
                             </button>
                         </div>
 
@@ -408,6 +427,21 @@ const baseStyles = `
     .vpd-add-btn:hover:not(:disabled) { background: var(--black); transform: translateY(-1px); }
     .vpd-add-btn.added { background: #3B6D11; }
     .vpd-add-btn:disabled { background: var(--sand); color: var(--bark); cursor: not-allowed; }
+
+    .vpd-wishlist-btn {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--cream);
+        border: 1px solid var(--sand);
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, transform 0.12s;
+    }
+    .vpd-wishlist-btn:hover { background: var(--sand); border-color: var(--bark); transform: translateY(-1px); }
+    .vpd-wishlist-btn.active { background: #FCEBEB; border-color: #C8472A; }
 
     .vpd-meta {
         display: flex;

@@ -2,12 +2,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
+import { WishlistContext } from '../context/WishlistContext';
 
 export default function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
     const { isAuthenticated, userRole, logout } = useContext(AuthContext);
     const { cartCount } = useContext(CartContext);
+    const { wishlistCount } = useContext(WishlistContext);
 
     const handleLogout = () => {
         navigate('/', { replace: true });
@@ -146,6 +148,17 @@ export default function Navbar() {
                     border: 2px solid var(--white); font-family: 'DM Sans', sans-serif;
                 }
 
+                .vn-wishlist {
+                    position: relative;
+                    display: inline-flex; align-items: center; justify-content: center;
+                    width: 38px; height: 38px;
+                    background: var(--cream); border: 1px solid var(--sand);
+                    border-radius: 2px; text-decoration: none; color: var(--charcoal);
+                    transition: background 0.2s, border-color 0.2s;
+                }
+                .vn-wishlist:hover { background: var(--sand); border-color: var(--bark); }
+                .vn-wishlist svg { width: 16px; height: 16px; stroke: var(--charcoal); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
                 @media (max-width: 768px) {
                     .vn-inner { padding: 0 1.2rem; }
                     .vn-links { display: none; }
@@ -163,6 +176,7 @@ export default function Navbar() {
                         <ul className="vn-links">
                             <li><Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link></li>
                             <li><Link to="/produits" className={isActive('/produits') ? 'active' : ''}>Catalogue</Link></li>
+                            <li><Link to="/wishlist" className={isActive('/wishlist') ? 'active' : ''}>Favoris</Link></li>
                             <li><Link to="/mes-commandes" className={isActive('/mes-commandes') ? 'active' : ''}>Mes Commandes</Link></li>
                             <li><Link to="/profil" className={isActive('/profil') ? 'active' : ''}>Profil</Link></li>
                             <li><Link to="/apropos" className={isActive('/apropos') ? 'active' : ''}>À Propos</Link></li>
@@ -207,6 +221,14 @@ export default function Navbar() {
                                     </svg>
                                     {cartCount > 0 && (
                                         <span className="vn-cart-badge">{cartCount}</span>
+                                    )}
+                                </Link>
+                                <Link to="/wishlist" className="vn-wishlist" title="Ma liste de souhaits">
+                                    <svg viewBox="0 0 24 24" style={{ fill: wishlistCount > 0 ? '#C8472A' : 'none' }}>
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                    </svg>
+                                    {wishlistCount > 0 && (
+                                        <span className="vn-cart-badge">{wishlistCount}</span>
                                     )}
                                 </Link>
                                 <div className="vn-divider" />
