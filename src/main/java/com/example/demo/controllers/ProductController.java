@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -128,5 +129,16 @@ public class ProductController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{id}/toggle-status")
+    public ResponseEntity<?> toggleProductStatus(@PathVariable Long id) {
+        Optional<Product> opt = productRepository.findById(id);
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+        
+        Product product = opt.get();
+        boolean current = product.isActive();
+        product.setActive(!current);
+        return ResponseEntity.ok(productRepository.save(product));
     }
 }

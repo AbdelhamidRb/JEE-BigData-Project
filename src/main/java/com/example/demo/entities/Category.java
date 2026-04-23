@@ -14,6 +14,8 @@ public class Category {
     private Long id;
     private String name;
     private String description;
+    @Column(columnDefinition = "boolean default true")
+    private boolean active = true;
     @JsonIgnore
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Product> products = new ArrayList<>();

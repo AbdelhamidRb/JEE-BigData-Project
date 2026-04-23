@@ -38,7 +38,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfig.addAllowedOriginPattern("http://localhost:517*");
+                    corsConfig.addAllowedOriginPattern("*");
                     corsConfig.addAllowedMethod("*");
                     corsConfig.addAllowedHeader("*");
                     corsConfig.setAllowCredentials(true);
@@ -47,21 +47,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-
-                        // 1. Permet les requêtes de "pré-vérification" (CORS OPTIONS) pour tout
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 2. Vos routes publiques
-                        .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
-
-                        // User routes
-                        .requestMatchers("/api/users/me").authenticated()
-                        .requestMatchers("/api/users").authenticated()
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-
-                        // Order routes
-                        .requestMatchers("/api/orders/**").authenticated()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

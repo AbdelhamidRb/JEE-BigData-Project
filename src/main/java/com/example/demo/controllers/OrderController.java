@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
+
 @RestController
 @RequestMapping("/api/orders")
 //@RequestMapping("/api/admin/orders") // Verify this matches your React call exactly
@@ -73,5 +75,13 @@ public class OrderController {
     @GetMapping("/admin/all")
     public ResponseEntity<?> getAllOrdersForAdmin() {
         return ResponseEntity.ok(orderRepository.findAll());
+    }
+
+    // 4. Modifier le statut d'une commande (Admin)
+    @PatchMapping("/admin/{id}/status")
+    public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Commande non trouvée"));
+        order.setStatus(request.getStatus());
+        return ResponseEntity.ok(orderRepository.save(order));
     }
 }

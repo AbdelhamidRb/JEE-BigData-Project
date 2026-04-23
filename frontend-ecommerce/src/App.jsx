@@ -22,6 +22,7 @@ import CategoryManagement from './components/CategoryManagement';
 import OrderManagement from './components/OrderManagement';
 import MyOrders from './components/MyOrders';
 import Profile from './components/Profile';
+import AdminProfile from './components/AdminProfile';
 import Wishlist from './components/Wishlist';
 import NotFound from './components/NotFound';
 import Unauthorized from './components/Unauthorized';
@@ -64,6 +65,7 @@ function App() {
               <Route path="/admin" element={<PrivateRoute roleRequired="ADMIN"><AdminLayout /></PrivateRoute>}>
                 {/* Ces sous-routes s'injectent dans AdminLayout (SANS slash devant) */}
                 <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="profile" element={<AdminProfile />} />
                 <Route path="products" element={<AdminProduct />} />
                 <Route path="categories" element={<CategoryManagement />} />
                 <Route path="users" element={<UsersManagement />} />
