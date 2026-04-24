@@ -23,13 +23,18 @@ const PlusIcon = () => (
 
 export default function ProductList() {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [quantities, setQuantities] = useState({});
     const [added, setAdded] = useState({});
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [sortBy, setSortBy] = useState('id');
+    const [priceRange, setPriceRange] = useState('all');
     const { addToCart } = useContext(CartContext);
     const { addToWishlist, removeFromWishlist, isInWishlist } = useContext(WishlistContext);
 
-    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => { fetchProducts(); fetchCategories(); }, []);
 
     const fetchProducts = async () => {
         try {
@@ -43,6 +48,13 @@ export default function ProductList() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const res = await api.get('/categories');
+            setCategories(res.data);
+        } catch { }
     };
 
     const handleQuantityChange = (id, value) => {
@@ -66,6 +78,27 @@ export default function ProductList() {
             await addToWishlist(product.id);
         }
     };
+
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesCategory = filterCategory === 'all' || p.category?.id === parseInt(filterCategory);
+        let matchesPrice = true;
+        if (priceRange !== 'all') {
+            const price = p.price || 0;
+            if (priceRange === '0-50') matchesPrice = price < 50;
+            else if (priceRange === '50-100') matchesPrice = price >= 50 && price < 100;
+            else if (priceRange === '100-200') matchesPrice = price >= 100 && price < 200;
+            else if (priceRange === '200+') matchesPrice = price >= 200;
+        }
+        return matchesSearch && matchesCategory && matchesPrice;
+    }).sort((a, b) => {
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        if (sortBy === 'price-asc') return (a.price || 0) - (b.price || 0);
+        if (sortBy === 'price-desc') return (b.price || 0) - (a.price || 0);
+        if (sortBy === 'stock') return (b.stock || 0) - (a.stock || 0);
+        return b.id - a.id;
+    });
 
     if (loading) {
         return (
@@ -92,13 +125,39 @@ export default function ProductList() {
                 <header className="vpl-header">
                     <div className="vpl-eyebrow">Catalogue</div>
                     <h1 className="vpl-title">Notre <em>Collection</em></h1>
-                    <p className="vpl-sub">{products.length} produit{products.length !== 1 ? 's' : ''} disponible{products.length !== 1 ? 's' : ''}</p>
+                    <p className="vpl-sub">{filteredProducts.length} produit{filteredProducts.length !== 1 ? 's' : ''} disponible{filteredProducts.length !== 1 ? 's' : ''}</p>
                 </header>
+
+                {/* FILTERS */}
+                <div className="vpl-filters">
+                    <input type="text" placeholder="Rechercher..." value={searchTerm}
+                           onChange={(e) => setSearchTerm(e.target.value)} className="vpl-search-input" />
+                    <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="vpl-select">
+                        <option value="all">Toutes catégories</option>
+                        {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                    </select>
+                    <select value={priceRange} onChange={(e) => setPriceRange(e.target.value)} className="vpl-select">
+                        <option value="all">Tous les prix</option>
+                        <option value="0-50">Moins de 50€</option>
+                        <option value="50-100">50€ - 100€</option>
+                        <option value="100-200">100€ - 200€</option>
+                        <option value="200+">200€ et plus</option>
+                    </select>
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="vpl-select">
+                        <option value="id">Plus récents</option>
+                        <option value="name">Nom A-Z</option>
+                        <option value="price-asc">Prix croissant</option>
+                        <option value="price-desc">Prix décroissant</option>
+                        <option value="stock">Stock</option>
+                    </select>
+                </div>
 
                 <div className="vpl-divider" />
 
                 {/* GRID */}
-                {products.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                     <div className="vpl-empty">
                         <div className="vpl-empty-icon">
                             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -109,7 +168,7 @@ export default function ProductList() {
                     </div>
                 ) : (
                     <div className="vpl-grid">
-                        {products.map((product) => {
+                        {filteredProducts.map((product) => {
                             const inStock = product.stock > 0;
                             const isAdded = added[product.id];
                             const qty = quantities[product.id] || 1;
@@ -250,11 +309,25 @@ const baseStyles = `
     .vpl-divider { height: 1px; background: var(--sand); margin-bottom: 2.5rem; }
 
     /* GRID */
-    .vpl-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-    }
+.vpl-grid {
+                    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+                }
+
+                /* FILTERS */
+                .vpl-filters {
+                    display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem;
+                    align-items: center;
+                }
+                .vpl-search-input {
+                    flex: 1; min-width: 180px; padding: 0.6rem 1rem;
+                    border: 1px solid var(--sand); border-radius: 2px;
+                    font-size: 0.85rem; background: var(--cream);
+                }
+                .vpl-search-input:focus { outline: none; border-color: var(--gold); }
+                .vpl-select {
+                    padding: 0.6rem 1rem; border: 1px solid var(--sand); border-radius: 2px;
+                    font-size: 0.8rem; background: var(--cream); cursor: pointer;
+                }
 
     /* CARD */
     .vpl-card {

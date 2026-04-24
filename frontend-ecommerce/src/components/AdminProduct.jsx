@@ -9,6 +9,8 @@ export default function AdminProduct() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [sortBy, setSortBy] = useState('id');
     const [formData, setFormData] = useState({
         id: null, name: '', description: '', price: '', stock: '', categoryId: '', active: true, imageUrl: ''
     });
@@ -130,7 +132,13 @@ export default function AdminProduct() {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
         const status = p.active !== undefined ? p.active : p.isActive;
         const matchesStatus = filterStatus === 'all' ? true : filterStatus === 'active' ? status === true : status === false;
-        return matchesSearch && matchesStatus;
+        const matchesCategory = filterCategory === 'all' ? true : p.category?.id === parseInt(filterCategory);
+        return matchesSearch && matchesStatus && matchesCategory;
+    }).sort((a, b) => {
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        if (sortBy === 'price') return (a.price || 0) - (b.price || 0);
+        if (sortBy === 'stock') return (a.stock || 0) - (b.stock || 0);
+        return b.id - a.id;
     });
 
     return (
@@ -268,6 +276,18 @@ export default function AdminProduct() {
                         <option value="all">Tous les statuts</option>
                         <option value="active">Actifs uniquement</option>
                         <option value="inactive">Inactifs uniquement</option>
+                    </select>
+                    <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="vap-filter-select">
+                        <option value="all">Toutes les catégories</option>
+                        {categories.map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                    </select>
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="vap-filter-select">
+                        <option value="id">Plus récents</option>
+                        <option value="name">Nom A-Z</option>
+                        <option value="price">Prix croissant</option>
+                        <option value="stock">Stock croissant</option>
                     </select>
                     <div className="vap-results-count">{filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''}</div>
                 </div>
