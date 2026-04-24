@@ -70,10 +70,10 @@ export default function Home() {
                 api.get('/products'),
                 api.get('/categories')
             ]);
-            
+
             const products = productsRes.data || [];
             const cats = categoriesRes.data || [];
-            
+
             setCategories(cats.slice(0, 3));
             setFeaturedProducts(products.slice(0, 4));
             setStats({
@@ -536,7 +536,7 @@ export default function Home() {
                         </svg>
                     </div>
                     <span className="vaux-hero-badge">Livraison offerte dès 80€</span>
-                    
+
                     {featuredProducts.length > 0 ? (
                         <div className="vaux-hero-products">
                             {featuredProducts.slice(0, 4).map((product) => (
@@ -615,13 +615,13 @@ export default function Home() {
                                     <p className="vaux-prod-desc">{product.description}</p>
                                     <div className="vaux-prod-footer">
                                         <span className="vaux-prod-price">{product.price?.toFixed(2)} €</span>
-                                        <button 
+                                        <button
                                             className="vaux-prod-add"
                                             onClick={() => handleAddToCart(product)}
                                         >
                                             Ajouter
                                         </button>
-                                        <button 
+                                        <button
                                             className={`vaux-prod-wishlist ${isInWishlist(product.id) ? 'active' : ''}`}
                                             onClick={() => handleWishlistToggle(product)}
                                             title={isInWishlist(product.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
