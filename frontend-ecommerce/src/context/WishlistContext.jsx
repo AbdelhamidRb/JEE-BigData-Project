@@ -46,11 +46,16 @@ export const WishlistProvider = ({ children }) => {
 
     const removeFromWishlist = async (productId) => {
         try {
+            // 1. On supprime côté backend
             await api.delete(`/wishlist/${productId}`);
-            await fetchWishlist();
+
+            // 2. On met à jour l'affichage instantanément sans rappeler fetchWishlist()
+            setWishlist((prevWishlist) => prevWishlist.filter(item => item.product?.id !== productId));
+
             toast.success('Produit retiré de la wishlist');
         } catch (error) {
             toast.error('Erreur lors de la suppression');
+            console.error(error);
         }
     };
 

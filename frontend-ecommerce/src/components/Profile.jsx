@@ -64,7 +64,7 @@ export default function Profile() {
             };
 
             const response = await api.put('/users/me', request);
-            
+
             if (formData.newPassword) {
                 toast.success('Mot de passe mis à jour ! Veuillez vous reconnecter');
             } else {
@@ -111,7 +111,7 @@ export default function Profile() {
                 <form onSubmit={handleSubmit} className="vp-form">
                     <div className="vp-section">
                         <h2 className="vp-section-title">Informations du compte</h2>
-                        
+
                         <div className="vp-field">
                             <label className="vp-label">Nom d'utilisateur</label>
                             <input
@@ -137,7 +137,7 @@ export default function Profile() {
 
                     <div className="vp-section">
                         <h2 className="vp-section-title">Adresse</h2>
-                        
+
                         <div className="vp-field">
                             <label className="vp-label">Ville</label>
                             <input
@@ -166,7 +166,7 @@ export default function Profile() {
                     <div className="vp-section">
                         <h2 className="vp-section-title">Changer le mot de passe</h2>
                         <p className="vp-hint">Laissez vide pour garder votre mot de passe actuel</p>
-                        
+
                         <div className="vp-field">
                             <label className="vp-label">Mot de passe actuel</label>
                             <input

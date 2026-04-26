@@ -6,6 +6,7 @@ import com.example.demo.entities.User;
 import com.example.demo.repositories.WishlistRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.repositories.ProductRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class WishlistService {
         Wishlist wishlist = new Wishlist(user, product);
         return wishlistRepository.save(wishlist);
     }
-
+    @Transactional
     public void removeFromWishlist(String email, Long productId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));

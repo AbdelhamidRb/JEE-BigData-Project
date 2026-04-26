@@ -46,7 +46,7 @@ public class ProductController {
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath);
 
-        return "http://localhost:8080/uploads/" + fileName; // URL complète pour React
+        return "http://localhost:9090/uploads/" + fileName; // URL complète pour React
     }
 
     @GetMapping
