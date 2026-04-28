@@ -3,29 +3,28 @@ package com.example.demo.controllers;
 import com.example.demo.entities.*;
 import com.example.demo.dto.*;
 import com.example.demo.repositories.*;
+import com.example.demo.services.BigDataLoggingService; // ← AJOUTER
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional; // ← AJOUTER
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
-
 @RestController
 @RequestMapping("/api/orders")
-//@RequestMapping("/api/admin/orders") // Verify this matches your React call exactly
 @CrossOrigin("*")
-//@CrossOrigin(origins = "http://localhost:9595", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS})
 public class OrderController {
 
     @Autowired private OrderRepository orderRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private BigDataLoggingService bigDataLoggingService; // ← AJOUTER
 
     // 1. Créer une nouvelle commande (Client)
     @PostMapping
+    @Transactional // ← AJOUTER
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest request, Authentication auth) {
-        // Récupérer l'utilisateur connecté via son email (token JWT)
         User user = userRepository.findByEmail(auth.getName()).orElseThrow();
 
         Order order = new Order();
@@ -36,24 +35,20 @@ public class OrderController {
 
         double totalAmount = 0;
 
-        // Traiter chaque article du panier
         for (OrderItemDto itemDto : request.getItems()) {
             Product product = productRepository.findById(itemDto.getProductId()).orElseThrow();
 
-            // Vérification de sécurité finale du stock côté serveur
             if (product.getStock() < itemDto.getQuantity()) {
                 return ResponseEntity.badRequest().body("Stock insuffisant pour le produit : " + product.getName());
             }
 
-            // Déduire le stock
             product.setStock(product.getStock() - itemDto.getQuantity());
             productRepository.save(product);
 
-            // Créer la ligne de commande
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(product);
             orderItem.setQuantity(itemDto.getQuantity());
-            orderItem.setPrice(product.getPrice()); // On fige le prix actuel
+            orderItem.setPrice(product.getPrice());
             orderItem.setOrder(order);
 
             order.getOrderItems().add(orderItem);
@@ -61,27 +56,36 @@ public class OrderController {
         }
 
         order.setTotalAmount(totalAmount);
-        return ResponseEntity.ok(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        bigDataLoggingService.sendOrderToHDFS(saved, "ORDER_CREATED"); // ← AJOUTER
+
+        return ResponseEntity.ok(saved);
     }
 
-    // 2. Voir l'historique de ses commandes (Client)
+    // 2. Voir l'historique de ses commandes (rien ne change)
     @GetMapping("/my-orders")
     public ResponseEntity<?> getMyOrders(Authentication auth) {
         User user = userRepository.findByEmail(auth.getName()).orElseThrow();
         return ResponseEntity.ok(orderRepository.findByUserOrderByIdDesc(user));
     }
 
-    // 3. Voir toutes les commandes (Admin)
+    // 3. Voir toutes les commandes (rien ne change)
     @GetMapping("/admin/all")
     public ResponseEntity<?> getAllOrdersForAdmin() {
         return ResponseEntity.ok(orderRepository.findAll());
     }
 
-    // 4. Modifier le statut d'une commande (Admin)
+    // 4. Modifier le statut (Admin)
     @PatchMapping("/admin/{id}/status")
+    @Transactional // ← AJOUTER
     public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Commande non trouvée"));
         order.setStatus(request.getStatus());
-        return ResponseEntity.ok(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        bigDataLoggingService.sendOrderToHDFS(saved, "ORDER_STATUS_UPDATED"); // ← AJOUTER
+
+        return ResponseEntity.ok(saved);
     }
 }

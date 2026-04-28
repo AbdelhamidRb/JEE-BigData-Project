@@ -23,13 +23,13 @@ public class Review {
     // L'utilisateur qui laisse l'avis
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties({"password", "roles", "orders", "email"}) // Cache les infos sensibles pour le JSON
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler","password", "roles", "orders", "email"})
     private User user;
 
     // Le produit concerné
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    @JsonIgnoreProperties("reviews") // Évite la boucle infinie
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "reviews"}) // Ajoute ceci
     private Product product;
 
     @PrePersist

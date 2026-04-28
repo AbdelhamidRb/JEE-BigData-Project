@@ -10,4 +10,5 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     // Permet de récupérer les avis d'un produit, triés du plus récent au plus ancien
     List<Review> findByProductIdOrderByCreatedAtDesc(Long productId);
+    boolean existsByProductIdAndUserId(Long productId, Long userId);
 }

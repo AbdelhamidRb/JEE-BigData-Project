@@ -54,6 +54,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/**").permitAll() // Pour voir les produits sans être connecté
                         .requestMatchers("/api/categories/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
+                        // Garde le POST des avis pour les utilisateurs connectés
+                        .requestMatchers(HttpMethod.POST, "/api/products/*/reviews").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

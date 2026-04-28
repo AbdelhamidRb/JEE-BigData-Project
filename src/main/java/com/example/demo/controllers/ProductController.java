@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 import com.example.demo.entities.Product;
 import com.example.demo.repositories.CategoryRepository;
 import com.example.demo.repositories.ProductRepository;
+import com.example.demo.services.BigDataLoggingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,9 @@ public class ProductController {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private BigDataLoggingService bigDataLoggingService;
 
     private final String UPLOAD_DIR = "uploads/";
 
@@ -69,7 +73,7 @@ public class ProductController {
         return ResponseEntity.ok(productRepository.findAll());
     }
 
-    // CREATE AVEC IMAGE
+    // CREATE — ajouter l'envoi après le save
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> createProduct(
@@ -83,13 +87,16 @@ public class ProductController {
             String imageUrl = saveImage(image);
             if (imageUrl != null) product.setImageUrl(imageUrl);
 
-            return ResponseEntity.ok(productRepository.save(product));
+            Product saved = productRepository.save(product);
+            bigDataLoggingService.sendProductToHDFS(saved, "PRODUCT_CREATED"); // ← AJOUTER
+
+            return ResponseEntity.ok(saved);
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Erreur lors de la sauvegarde de l'image");
         }
     }
 
-    // UPDATE AVEC IMAGE
+    // UPDATE — ajouter l'envoi après le save
     @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> updateProduct(
@@ -110,15 +117,31 @@ public class ProductController {
                 }
 
                 String imageUrl = saveImage(image);
-                if (imageUrl != null) {
-                    p.setImageUrl(imageUrl); // Met à jour l'image seulement si une nouvelle est envoyée
-                }
+                if (imageUrl != null) p.setImageUrl(imageUrl);
 
-                return ResponseEntity.ok(productRepository.save(p));
+                Product saved = productRepository.save(p);
+                bigDataLoggingService.sendProductToHDFS(saved, "PRODUCT_UPDATED"); // ← AJOUTER
+
+                return ResponseEntity.ok(saved);
             } catch (IOException e) {
                 return ResponseEntity.internalServerError().build();
             }
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // TOGGLE STATUS — ajouter l'envoi après le save
+    @PutMapping("/{id}/toggle-status")
+    public ResponseEntity<?> toggleProductStatus(@PathVariable Long id) {
+        Optional<Product> opt = productRepository.findById(id);
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+
+        Product product = opt.get();
+        product.setActive(!product.isActive());
+        Product saved = productRepository.save(product);
+
+        bigDataLoggingService.sendProductToHDFS(saved, "PRODUCT_TOGGLED"); // ← AJOUTER
+
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
@@ -131,14 +154,4 @@ public class ProductController {
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{id}/toggle-status")
-    public ResponseEntity<?> toggleProductStatus(@PathVariable Long id) {
-        Optional<Product> opt = productRepository.findById(id);
-        if (opt.isEmpty()) return ResponseEntity.notFound().build();
-        
-        Product product = opt.get();
-        boolean current = product.isActive();
-        product.setActive(!current);
-        return ResponseEntity.ok(productRepository.save(product));
-    }
 }
