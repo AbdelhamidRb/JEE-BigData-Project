@@ -9,6 +9,7 @@ export default function ProductDetail() {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [reviews, setReviews] = useState([]);
+    const [hasUserReviewed, setHasUserReviewed] = useState(false); // Nouvel état
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState(0);
@@ -27,19 +28,57 @@ export default function ProductDetail() {
     }, [id]);
 
     const fetchProductData = async () => {
-        try {
-            const [productRes, reviewsRes] = await Promise.all([
-                api.get(`/products/${id}`),
-                api.get(`/products/${id}/reviews`).catch(() => ({ data: [] }))
-            ]);
-            setProduct(productRes.data);
-            setReviews(reviewsRes.data);
-        } catch {
-            toast.error('Produit non trouvé');
-        } finally {
-            setLoading(false);
-        }
-    };
+            setLoading(true);
+            try {
+                const [productRes, reviewsRes] = await Promise.all([
+                    api.get(`/products/${id}`),
+                    api.get(`/products/${id}/reviews`).catch(() => ({ data: [] }))
+                ]);
+
+                if (productRes.data) {
+                    setProduct(productRes.data);
+                    const reviewsData = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+                    setReviews(reviewsData);
+
+                    // --- LOGIQUE DE VÉRIFICATION DE L'AVIS ---
+                    const storedUser = localStorage.getItem('user');
+
+                    if (storedUser && reviewsData.length > 0) {
+                        let currentUser;
+                        try {
+                            // On essaie de parser si c'est un objet JSON
+                            currentUser = JSON.parse(storedUser);
+                        } catch (e) {
+                            // Si c'est juste une chaîne (ex: l'email ou le username direct)
+                            currentUser = storedUser;
+                        }
+
+                        const alreadyReviewed = reviewsData.some(r => {
+                            if (!r.user) return false;
+
+                            // Comparaison flexible (ID, Username ou Email)
+                            // On utilise == au lieu de === pour éviter les problèmes de type String vs Number
+                            if (typeof currentUser === 'object') {
+                                return r.user.id == currentUser.id ||
+                                       r.user.username === currentUser.username ||
+                                       r.user.email === currentUser.email;
+                            } else {
+                                return r.user.username === currentUser ||
+                                       r.user.email === currentUser;
+                            }
+                        });
+
+                        console.log("L'utilisateur a déjà voté ?", alreadyReviewed);
+                        setHasUserReviewed(alreadyReviewed);
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur de chargement :", error);
+                toast.error('Erreur de connexion au serveur');
+            } finally {
+                setLoading(false);
+            }
+        };
 
     const handleAddToCart = () => {
         addToCart(product, quantity);
@@ -63,11 +102,17 @@ export default function ProductDetail() {
         try {
             const response = await api.post(`/products/${id}/reviews`, { rating, comment });
             setReviews([response.data, ...reviews]);
+            setHasUserReviewed(true); // Cache le formulaire immédiatement après succès
             setComment('');
             setRating(5);
             toast.success('Votre avis a été publié !');
         } catch (error) {
-            toast.error('Erreur lors de la publication de l\'avis. Êtes-vous connecté ?');
+            if (error.response?.status === 400) {
+                toast.error(error.response.data || 'Vous avez déjà publié un avis.');
+                setHasUserReviewed(true); // Cache le formulaire si le backend bloque
+            } else {
+                toast.error('Erreur lors de la publication. Êtes-vous connecté ?');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -221,30 +266,37 @@ export default function ProductDetail() {
                 <section className="vpd-reviews">
                     <h2 className="vpd-reviews-title">Avis Clients ({reviews.length})</h2>
 
-                    {/* Formulaire d'ajout d'avis */}
-                    <form className="vpd-review-form" onSubmit={handleSubmitReview}>
-                        <h3>Laisser un avis</h3>
-                        <div className="vpd-rating-input">
-                            <label>Note :</label>
-                            <select value={rating} onChange={(e) => setRating(Number(e.target.value))}>
-                                <option value={5}>5 ★ - Excellent</option>
-                                <option value={4}>4 ★ - Très bien</option>
-                                <option value={3}>3 ★ - Bien</option>
-                                <option value={2}>2 ★ - Moyen</option>
-                                <option value={1}>1 ★ - Décevant</option>
-                            </select>
+                    {/* Affichage conditionnel : Formulaire OU Message de remerciement */}
+                    {!hasUserReviewed ? (
+                        <form className="vpd-review-form" onSubmit={handleSubmitReview}>
+                            <h3>Laisser un avis</h3>
+                            <div className="vpd-rating-input">
+                                <label>Note :</label>
+                                <select value={rating} onChange={(e) => setRating(Number(e.target.value))}>
+                                    <option value={5}>5 ★ - Excellent</option>
+                                    <option value={4}>4 ★ - Très bien</option>
+                                    <option value={3}>3 ★ - Bien</option>
+                                    <option value={2}>2 ★ - Moyen</option>
+                                    <option value={1}>1 ★ - Décevant</option>
+                                </select>
+                            </div>
+                            <textarea
+                                placeholder="Partagez votre expérience avec ce produit..."
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                rows="4"
+                                required
+                            />
+                            <button type="submit" disabled={submitting} className="vpd-submit-review">
+                                {submitting ? 'Envoi en cours...' : 'Publier mon avis'}
+                            </button>
+                        </form>
+                    ) : (
+                        <div className="vpd-already-reviewed">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <p>Vous avez déjà partagé votre avis sur ce produit. Merci !</p>
                         </div>
-                        <textarea
-                            placeholder="Partagez votre expérience avec ce produit..."
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows="4"
-                            required
-                        />
-                        <button type="submit" disabled={submitting} className="vpd-submit-review">
-                            {submitting ? 'Envoi en cours...' : 'Publier mon avis'}
-                        </button>
-                    </form>
+                    )}
 
                     {/* Liste des avis existants */}
                     <div className="vpd-reviews-list">
@@ -345,6 +397,9 @@ const baseStyles = `
     .vpd-submit-review { background: var(--charcoal); color: var(--white); padding: 0.8rem 1.5rem; border: none; border-radius: 3px; cursor: pointer; font-family: 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8rem; transition: background 0.2s; }
     .vpd-submit-review:hover { background: var(--black); }
     .vpd-submit-review:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .vpd-already-reviewed { display: flex; align-items: center; gap: 0.8rem; background: #EAF3DE; color: #3B6D11; padding: 1.2rem; border-radius: 4px; margin-bottom: 2rem; font-weight: 500; }
+    .vpd-already-reviewed svg { color: #3B6D11; }
 
     .vpd-reviews-list { display: flex; flex-direction: column; gap: 1rem; }
     .vpd-review-card { padding: 1.5rem; border: 1px solid var(--sand); border-radius: 4px; background: #fff; }
