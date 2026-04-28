@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: jee26
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  springboot-app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql-db
+      - hbase-master
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/jee26?allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+
+  react-app:
+    build: ./frontend-ecommerce
+    ports:
+      - "5173:5173"
+    depends_on:
+      - springboot-app
+
+  # Environnement Big Data pour Olist
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    ports:
+      - "9870:9870"
+      - "8020:8020"
+    environment:
+      - CLUSTER_NAME=test
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+      - HDFS_CONF_dfs_replication=1
+    volumes:
+      - "/mnt/c/Users/pc/Downloads/archive:/tmp/olist"
+      - hadoop_namenode_v2:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    environment:
+      - SERVICE_PRECONDITION=namenode:9870
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    volumes:
+      - hadoop_datanode_v2:/hadoop/dfs/data
+
+  hbase-master:
+    image: dajobe/hbase
+    ports:
+      - "16010:16010"
+      - "9090:9090"
+
+volumes:
+  mysql_data:
+  hadoop_namenode_v2:
+  hadoop_datanode_v2:
