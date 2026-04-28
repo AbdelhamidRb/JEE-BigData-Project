@@ -36,18 +36,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // 1. Configuration CORS unifiée
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfig.addAllowedOriginPattern("*");
-                    corsConfig.addAllowedMethod("*");
-                    corsConfig.addAllowedHeader("*");
+                    corsConfig.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+                    corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfig.setAllowedHeaders(java.util.List.of("*"));
                     corsConfig.setAllowCredentials(true);
                     return corsConfig;
                 }))
+                // 2. Désactiver le CSRF (nécessaire pour les API sans cookies de session)
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // 3. Autoriser les routes publiques
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()     // Indispensable pour login/register
+                        .requestMatchers("/api/products/**").permitAll() // Pour voir les produits sans être connecté
+                        .requestMatchers("/api/categories/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

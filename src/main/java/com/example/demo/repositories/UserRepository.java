@@ -8,4 +8,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Nécessaire pour Spring Security (login avec email)
     Optional<User> findByEmail(String email);
     User findUserById(Long id);
+    Optional<User> findByUsername(String username);
 }

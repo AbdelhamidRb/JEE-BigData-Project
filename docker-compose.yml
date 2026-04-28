@@ -14,7 +14,7 @@ services:
   springboot-app:
     build: .
     ports:
-      - "8080:8080"
+      - "9090:9090"
     depends_on:
       - mysql-db
       - hbase-master
@@ -30,6 +30,9 @@ services:
       - "5173:5173"
     depends_on:
       - springboot-app
+    volumes:
+      - ./frontend-ecommerce:/app
+      - /app/node_modules
 
   # Environnement Big Data pour Olist
   namenode:
@@ -57,7 +60,7 @@ services:
     image: dajobe/hbase
     ports:
       - "16010:16010"
-      - "9090:9090"
+      - "9191:9191"
 
 volumes:
   mysql_data:

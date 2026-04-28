@@ -12,8 +12,8 @@ public class OrderItem {
 
     private Integer quantity;
     private Double price; // On sauvegarde le prix au moment de l'achat
-
-    @ManyToOne
+    
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @JsonIgnore
     private Product product;
