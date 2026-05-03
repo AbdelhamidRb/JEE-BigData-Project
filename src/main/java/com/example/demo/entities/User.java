@@ -29,6 +29,7 @@ public class User {
 
     // Relation Many-to-Many gérée avec une table de jointure
     @ManyToMany(fetch = FetchType.EAGER)
+    @JsonIgnore
     @JoinTable(name = "user_role",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))

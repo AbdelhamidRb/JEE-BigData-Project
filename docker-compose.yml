@@ -23,7 +23,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
     volumes:
-      - shared_logs:/app/logs          # ← Spring Boot écrit ici ses JSON
+      - shared_logs:/app/logs
 
   react-app:
     build: ./frontend-ecommerce
@@ -35,7 +35,6 @@ services:
       - ./frontend-ecommerce:/app
       - /app/node_modules
 
-  # ── HDFS ────────────────────────────────────────────────────────────────────
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     ports:
@@ -57,17 +56,40 @@ services:
     volumes:
       - hadoop_datanode_v2:/hadoop/dfs/data
 
-  # ── HBase ────────────────────────────────────────────────────────────────────
   hbase-master:
     image: dajobe/hbase
     ports:
       - "16010:16010"
       - "9191:9191"
+      - "2181:2181"
+    volumes:
+      - hbase_data:/data    # ← persistance HBase
 
-  # ── Flume ────────────────────────────────────────────────────────────────────
+  # ── Init HBase : crée les tables + démarre Thrift automatiquement ──────────
+  hbase-init:
+    image: dajobe/hbase
+    depends_on:
+      - hbase-master
+    volumes:
+      - ./hbase-init.sh:/hbase-init.sh
+    command: >
+      sh -c "
+        sleep 25 &&
+        hbase thrift start -p 9090 &
+        sleep 10 &&
+        hbase shell -e \"create 'analytics_sales_by_category', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
+        hbase shell -e \"create 'analytics_reviews_by_category', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
+        hbase shell -e \"create 'analytics_revenue_by_month', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
+        hbase shell -e \"create 'analytics_top_products', {NAME => 'info', VERSIONS => 1}\" 2>/dev/null || true &&
+        hbase shell -e \"create 'analytics_sales_by_state', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
+        echo 'Tables HBase créées ✅' &&
+        sleep infinity
+      "
+    restart: "no"
+
   flume:
     build:
-      context: ./flume          # ← dossier contenant le Dockerfile
+      context: ./flume
       dockerfile: Dockerfile
     depends_on:
       - namenode
@@ -77,18 +99,83 @@ services:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
       - FLUME_AGENT_NAME=agent
     volumes:
-      - shared_logs:/app/logs                                    # ← lit les logs de Spring Boot
-      - ./flume/flume.conf:/opt/flume-config/flume.conf  # ← /opt/flume-config
+      - shared_logs:/app/logs
+      - ./flume/flume.conf:/opt/flume-config/flume.conf
+    restart: on-failure
+
+  # ── MapReduce : job historique lancé automatiquement au démarrage ──────────
+  mapreduce:
+    build:
+      context: ./mapreduce
+      dockerfile: Dockerfile
+    depends_on:
+      - namenode
+      - datanode
+      - hbase-master
+      - hbase-init
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+      - HBASE_CONF_hbase_zookeeper_quorum=hbase-master
+    volumes:
+      - shared_logs:/app/logs
     command: >
-      flume-ng agent
-        --conf /opt/flume/conf
-        --conf-file /opt/flume/conf/flume-hdfs.conf
-        --name agent
-        -Dflume.root.logger=INFO,console
-    restart: on-failure   # redemarre si namenode pas encore prêt
+      sh -c "
+        echo 'Attente HDFS et HBase (120s)...'
+        sleep 120 &&
+        echo 'Création dossiers HDFS...' &&
+        hadoop fs -mkdir -p hdfs://namenode:8020/data/realtime &&
+        hadoop fs -mkdir -p hdfs://namenode:8020/data/historical &&
+        echo 'Chargement CSV Olist...' &&
+        hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_orders_dataset.csv ||
+        hadoop fs -put /tmp/olist/olist_orders_dataset.csv hdfs://namenode:8020/data/historical/ &&
+        hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_order_items_dataset.csv ||
+        hadoop fs -put /tmp/olist/olist_order_items_dataset.csv hdfs://namenode:8020/data/historical/ &&
+        hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_order_reviews_dataset.csv ||
+        hadoop fs -put /tmp/olist/olist_order_reviews_dataset.csv hdfs://namenode:8020/data/historical/ &&
+        hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_customers_dataset.csv ||
+        hadoop fs -put /tmp/olist/olist_customers_dataset.csv hdfs://namenode:8020/data/historical/ &&
+        hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_products_dataset.csv ||
+        hadoop fs -put /tmp/olist/olist_products_dataset.csv hdfs://namenode:8020/data/historical/ &&
+        hadoop fs -test -e hdfs://namenode:8020/data/historical/product_category_name_translation.csv ||
+        hadoop fs -put /tmp/olist/product_category_name_translation.csv hdfs://namenode:8020/data/historical/ &&
+        echo 'Lancement job historique MapReduce...' &&
+        java -jar /mapreduce/target/mapreduce-jobs-1.0.jar historical &&
+        echo 'Job historique terminé ✅' &&
+        sleep infinity
+      "
+    restart: "no"
+
+  # ── MapReduce Watcher : déclenché par trigger à 128MB ─────────────────────
+  mapreduce-watcher:
+    build:
+      context: ./mapreduce
+      dockerfile: Dockerfile
+    depends_on:
+      - mapreduce
+      - namenode
+      - hbase-init
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    volumes:
+      - shared_logs:/app/logs
+    command: >
+      sh -c "
+        echo 'Watcher démarré — surveillance trigger...'
+        while true; do
+          if [ -f /app/logs/trigger_mr.txt ]; then
+            echo 'Trigger détecté → lancement MapReduce temps réel'
+            rm /app/logs/trigger_mr.txt
+            java -jar /mapreduce/target/mapreduce-jobs-1.0.jar realtime
+            echo 'Job temps réel terminé ✅'
+          fi
+          sleep 30
+        done
+      "
+    restart: always
 
 volumes:
   mysql_data:
   hadoop_namenode_v2:
   hadoop_datanode_v2:
-  shared_logs:             # ← volume partagé Spring Boot ↔ Flume
+  hbase_data:        # ← persistance HBase
+  shared_logs:

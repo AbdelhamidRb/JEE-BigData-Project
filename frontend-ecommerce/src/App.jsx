@@ -26,6 +26,7 @@ import AdminProfile from './components/AdminProfile';
 import Wishlist from './components/Wishlist';
 import NotFound from './components/NotFound';
 import Unauthorized from './components/Unauthorized';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
 
 function App() {
   return (
@@ -70,6 +71,7 @@ function App() {
                 <Route path="categories" element={<CategoryManagement />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="orders" element={<OrderManagement />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
               </Route>
 
               {/* 404 Not Found */}

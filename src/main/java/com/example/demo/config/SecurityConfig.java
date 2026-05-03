@@ -40,8 +40,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new org.springframework.web.cors.CorsConfiguration();
                     corsConfig.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
-                    corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    corsConfig.setAllowedHeaders(java.util.List.of("*"));
+                    corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));                    corsConfig.setAllowedHeaders(java.util.List.of("*"));
                     corsConfig.setAllowCredentials(true);
                     return corsConfig;
                 }))
@@ -54,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/**").permitAll() // Pour voir les produits sans être connecté
                         .requestMatchers("/api/categories/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/analytics/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
                         // Garde le POST des avis pour les utilisateurs connectés
                         .requestMatchers(HttpMethod.POST, "/api/products/*/reviews").authenticated()

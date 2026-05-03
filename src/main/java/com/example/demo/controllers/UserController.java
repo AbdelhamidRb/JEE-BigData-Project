@@ -27,8 +27,9 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest request, Authentication auth) {
         try {
-            User updated = userService.updateProfile(auth.getName(), request);
-            return ResponseEntity.ok(updated);
+            userService.updateProfile(auth.getName(), request);
+            // ← CORRECTION : On renvoie un objet JSON propre et léger
+            return ResponseEntity.ok(java.util.Map.of("message", "Profil mis à jour avec succès"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
