@@ -24,6 +24,9 @@ services:
       - SPRING_DATASOURCE_PASSWORD=root
     volumes:
       - shared_logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./data:/tmp/olist
+    restart: on-failure
 
   react-app:
     build: ./frontend-ecommerce
@@ -45,7 +48,7 @@ services:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
       - HDFS_CONF_dfs_replication=1
     volumes:
-      - "/mnt/c/Users/pc/Downloads/archive:/tmp/olist"
+      - "./data:/tmp/olist"
       - hadoop_namenode_v2:/hadoop/dfs/name
 
   datanode:
@@ -63,9 +66,8 @@ services:
       - "9191:9191"
       - "2181:2181"
     volumes:
-      - hbase_data:/data    # ← persistance HBase
+      - hbase_data:/data
 
-  # ── Init HBase : crée les tables + démarre Thrift automatiquement ──────────
   hbase-init:
     image: dajobe/hbase
     depends_on:
@@ -103,7 +105,6 @@ services:
       - ./flume/flume.conf:/opt/flume-config/flume.conf
     restart: on-failure
 
-  # ── MapReduce : job historique lancé automatiquement au démarrage ──────────
   mapreduce:
     build:
       context: ./mapreduce
@@ -118,14 +119,15 @@ services:
       - HBASE_CONF_hbase_zookeeper_quorum=hbase-master
     volumes:
       - shared_logs:/app/logs
+      - ./data:/tmp/olist
     command: >
       sh -c "
         echo 'Attente HDFS et HBase (120s)...'
         sleep 120 &&
-        echo 'Création dossiers HDFS...' &&
+        echo 'Création dossiers HDFS...'
         hadoop fs -mkdir -p hdfs://namenode:8020/data/realtime &&
         hadoop fs -mkdir -p hdfs://namenode:8020/data/historical &&
-        echo 'Chargement CSV Olist...' &&
+        echo 'Chargement CSV Olist...'
         hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_orders_dataset.csv ||
         hadoop fs -put /tmp/olist/olist_orders_dataset.csv hdfs://namenode:8020/data/historical/ &&
         hadoop fs -test -e hdfs://namenode:8020/data/historical/olist_order_items_dataset.csv ||
@@ -138,14 +140,13 @@ services:
         hadoop fs -put /tmp/olist/olist_products_dataset.csv hdfs://namenode:8020/data/historical/ &&
         hadoop fs -test -e hdfs://namenode:8020/data/historical/product_category_name_translation.csv ||
         hadoop fs -put /tmp/olist/product_category_name_translation.csv hdfs://namenode:8020/data/historical/ &&
-        echo 'Lancement job historique MapReduce...' &&
+        echo 'Lancement job historique MapReduce...'
         java -jar /mapreduce/target/mapreduce-jobs-1.0.jar historical &&
         echo 'Job historique terminé ✅' &&
         sleep infinity
       "
     restart: "no"
 
-  # ── MapReduce Watcher : déclenché par trigger à 128MB ─────────────────────
   mapreduce-watcher:
     build:
       context: ./mapreduce
@@ -158,6 +159,7 @@ services:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
     volumes:
       - shared_logs:/app/logs
+      - ./data:/tmp/olist
     command: >
       sh -c "
         echo 'Watcher démarré — surveillance trigger...'
@@ -177,5 +179,5 @@ volumes:
   mysql_data:
   hadoop_namenode_v2:
   hadoop_datanode_v2:
-  hbase_data:        # ← persistance HBase
+  hbase_data:
   shared_logs:

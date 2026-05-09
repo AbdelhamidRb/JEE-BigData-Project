@@ -14,8 +14,6 @@ import java.io.IOException;
 
 public class ReviewsByCategoryMR {
 
-    // review_id(0), order_id(1), review_score(2), review_comment_title(3),
-    // review_comment_message(4), review_creation_date(5), review_answer_timestamp(6)
     public static class ReviewsMapper
             extends Mapper<LongWritable, Text, Text, IntWritable> {
 
@@ -26,15 +24,15 @@ public class ReviewsByCategoryMR {
                 throws IOException, InterruptedException {
             if (isHeader) { isHeader = false; return; }
 
-            String[] f = value.toString().split(",");
+            String[] f = CsvParser.parse(value.toString());
             if (f.length < 3) return;
 
             try {
                 int score = Integer.parseInt(f[2].trim().replace("\"", ""));
-                // Grouper par note (1 à 5)
+                if (score < 1 || score > 5) return;
                 String scoreKey = "score_" + score;
                 context.write(new Text(scoreKey), new IntWritable(score));
-            } catch (Exception e) { /* ignore */ }
+            } catch (Exception e) { }
         }
     }
 
@@ -45,8 +43,8 @@ public class ReviewsByCategoryMR {
         public void reduce(Text key, Iterable<IntWritable> values, Context context)
                 throws IOException, InterruptedException {
 
-            int totalReviews   = 0;
-            double totalScore  = 0;
+            int totalReviews  = 0;
+            double totalScore = 0;
 
             for (IntWritable val : values) {
                 totalScore += val.get();
@@ -55,21 +53,21 @@ public class ReviewsByCategoryMR {
 
             double avgRating       = totalReviews > 0 ? totalScore / totalReviews : 0;
             int positiveReviews    = key.toString().startsWith("score_4") ||
-                    key.toString().startsWith("score_5") ? totalReviews : 0;
+                                    key.toString().startsWith("score_5") ? totalReviews : 0;
             int negativeReviews    = key.toString().startsWith("score_1") ||
-                    key.toString().startsWith("score_2") ? totalReviews : 0;
+                                    key.toString().startsWith("score_2") ? totalReviews : 0;
             double satisfactionPct = totalReviews > 0
                     ? ((double) positiveReviews / totalReviews) * 100 : 0;
 
-            String rowKey = "hist_" + key.toString();
+            String rowKey = "hist_score_" + key.toString().replace("score_", "");
             Put put = new Put(Bytes.toBytes(rowKey));
             byte[] family = Bytes.toBytes("stats");
 
-            put.addColumn(family, Bytes.toBytes("source"),           Bytes.toBytes("historical"));
-            put.addColumn(family, Bytes.toBytes("category"),         Bytes.toBytes(key.toString()));
-            put.addColumn(family, Bytes.toBytes("avg_rating"),       Bytes.toBytes(String.format("%.2f", avgRating)));
-            put.addColumn(family, Bytes.toBytes("total_reviews"),    Bytes.toBytes(String.valueOf(totalReviews)));
-            put.addColumn(family, Bytes.toBytes("positive_reviews"), Bytes.toBytes(String.valueOf(positiveReviews)));
+            put.addColumn(family, Bytes.toBytes("source"),            Bytes.toBytes("historical"));
+            put.addColumn(family, Bytes.toBytes("category"),          Bytes.toBytes(key.toString()));
+            put.addColumn(family, Bytes.toBytes("avg_rating"),        Bytes.toBytes(String.format("%.2f", avgRating)));
+            put.addColumn(family, Bytes.toBytes("total_reviews"),     Bytes.toBytes(String.valueOf(totalReviews)));
+            put.addColumn(family, Bytes.toBytes("positive_reviews"),  Bytes.toBytes(String.valueOf(positiveReviews)));
             put.addColumn(family, Bytes.toBytes("negative_reviews"), Bytes.toBytes(String.valueOf(negativeReviews)));
             put.addColumn(family, Bytes.toBytes("satisfaction_pct"), Bytes.toBytes(String.format("%.1f", satisfactionPct)));
 

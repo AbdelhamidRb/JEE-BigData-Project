@@ -39,33 +39,45 @@ public class JwtFilter extends OncePerRequestFilter {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 token = authHeader.substring(7);
                 email = jwtUtil.extractEmail(token);
+                System.out.println("[JWT] Email extracted: " + email);
+            } else {
+                System.out.println("[JWT] No Authorization header found for: " + request.getRequestURI());
             }
         } catch (ExpiredJwtException e) {
             System.out.println("Erreur : Le token JWT a expiré.");
         } catch (Exception e) {
-            System.out.println("Erreur : Token JWT invalide.");
+            System.out.println("Erreur : Token JWT invalide: " + e.getMessage());
         }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            try {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                System.out.println("[JWT] User loaded: " + userDetails.getUsername());
 
-            if (jwtUtil.isTokenValid(token, userDetails.getUsername())) {
+                if (jwtUtil.isTokenValid(token, userDetails.getUsername())) {
 
-                // ← Extraire le rôle directement du token
-                String role = jwtUtil.extractRole(token);
-                var authorities = java.util.List.of(
-                        new org.springframework.security.core.authority.SimpleGrantedAuthority(role)
-                );
+                    // ← Extraire le rôle directement du token
+                    String role = jwtUtil.extractRole(token);
+                    System.out.println("[JWT] Role extracted: " + role);
+                    var authorities = java.util.List.of(
+                            new org.springframework.security.core.authority.SimpleGrantedAuthority(role)
+                    );
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                authorities  // ← utilise les authorities du token
-                        );
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    authorities  // ← utilise les authorities du token
+                            );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("[JWT] Authentication set for: " + email + " with role: " + role);
+                } else {
+                    System.out.println("[JWT] Token invalid for email: " + email);
+                }
+            } catch (Exception e) {
+                System.out.println("[JWT] Error loading user: " + e.getMessage());
             }
         }
 

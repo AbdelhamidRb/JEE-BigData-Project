@@ -25,16 +25,15 @@ public class SalesByCategoryMR {
                 throws IOException, InterruptedException {
             if (isHeader) { isHeader = false; return; }
 
-            // order_id(0), order_item_id(1), product_id(2), seller_id(3),
-            // shipping_limit_date(4), price(5), freight_value(6)
-            String[] f = value.toString().split(",");
-            if (f.length < 6) return;
+            String[] f = CsvParser.parse(value.toString());
+            if (f.length < 7) return;
 
             try {
                 String productId = f[2].trim().replace("\"", "");
                 double price     = Double.parseDouble(f[5].trim().replace("\"", ""));
+                if (productId.isEmpty() || price <= 0) return;
                 context.write(new Text(productId), new DoubleWritable(price));
-            } catch (Exception e) { /* ignore */ }
+            } catch (Exception e) { }
         }
     }
 

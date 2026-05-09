@@ -57,6 +57,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
                         // Garde le POST des avis pour les utilisateurs connectés
                         .requestMatchers(HttpMethod.POST, "/api/products/*/reviews").authenticated()
+                        .requestMatchers("/api/users/me").authenticated()
+                        .requestMatchers("/api/wishlist/**").authenticated()
+                        .requestMatchers("/api/orders/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

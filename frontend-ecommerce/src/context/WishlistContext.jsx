@@ -11,7 +11,7 @@ export const WishlistProvider = ({ children }) => {
     const { isAuthenticated } = useContext(AuthContext);
 
     useEffect(() => {
-        if (isAuthenticated) {
+        if (isAuthenticated && localStorage.getItem('token')) {
             fetchWishlist();
         } else {
             setWishlist([]);

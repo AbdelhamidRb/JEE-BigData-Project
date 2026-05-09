@@ -1,8 +1,7 @@
 package com.example.demo.services;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.stereotype.Service;
@@ -12,9 +11,9 @@ import java.util.*;
 @Service
 public class HBaseAnalyticsService {
 
-    private Configuration getHBaseConfig() {
-        Configuration config = HBaseConfiguration.create();
-        config.set("hbase.zookeeper.quorum", "jee-bigdata-project-hbase-master-1");
+    private org.apache.hadoop.conf.Configuration getHBaseConfig() {
+        org.apache.hadoop.conf.Configuration config = org.apache.hadoop.hbase.HBaseConfiguration.create();
+        config.set("hbase.zookeeper.quorum", "hbase-master");
         config.set("hbase.zookeeper.property.clientPort", "2181");
         config.set("hbase.client.retries.number", "3");
         config.set("hbase.rpc.timeout", "10000");
@@ -40,11 +39,14 @@ public class HBaseAnalyticsService {
     }
 
     public List<Map<String, String>> scanTable(String tableName) {
-        // Nouvelle connexion à chaque appel — évite les sessions expirées
-        try (Connection connection = ConnectionFactory.createConnection(getHBaseConfig())) {
-            List<Map<String, String>> results = new ArrayList<>();
+        System.out.println("[HBase] Attempting to connect to: " + tableName);
+        try {
+            org.apache.hadoop.conf.Configuration config = getHBaseConfig();
+            Connection connection = ConnectionFactory.createConnection(config);
             Table table = connection.getTable(TableName.valueOf(tableName));
+            List<Map<String, String>> results = new ArrayList<>();
             Scan scan = new Scan();
+            scan.setCaching(100);
             ResultScanner scanner = table.getScanner(scan);
             for (Result result : scanner) {
                 Map<String, String> row = rowToMap(result);
@@ -53,10 +55,15 @@ public class HBaseAnalyticsService {
             }
             scanner.close();
             table.close();
-            System.out.println("[HBase] " + tableName + " → " + results.size() + " lignes");
+            connection.close();
+            System.out.println("[HBase] " + tableName + " → " + results.size() + " rows");
             return results;
+        } catch (TableNotFoundException e) {
+            System.out.println("[HBase] Table not found: " + tableName + " (will be created on next seed)");
+            return new ArrayList<>();
         } catch (Exception e) {
-            System.err.println("[HBase] Erreur " + tableName + " : " + e.getMessage());
+            System.err.println("[HBase] Error reading " + tableName + " : " + e.getMessage());
+            e.printStackTrace();
             return new ArrayList<>();
         }
     }

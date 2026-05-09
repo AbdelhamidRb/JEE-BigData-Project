@@ -34,16 +34,18 @@ export default function AdminDashboard() {
         const fetchDashboardData = async () => {
             try {
                 const [prodRes, ordRes, userRes, catSalesRes] = await Promise.all([
-                    api.get('/products/admin/all').catch(() => ({ data: [] })),
-                    api.get('/orders/admin/all').catch(() => ({ data: [] })),
-                    api.get('/users').catch(() => ({ data: [] })),
-                    api.get('/orders/admin/sales-by-category').catch(() => ({ data: [] }))
+                    api.get('/products/admin/all').catch((e) => { console.error('products error:', e); return { data: [] }; }),
+                    api.get('/orders/admin/all').catch((e) => { console.error('orders error:', e); return { data: [] }; }),
+                    api.get('/users').catch((e) => { console.error('users error:', e); return { data: [] }; }),
+                    api.get('/analytics/sales-by-category').catch((e) => { console.error('analytics error:', e); return { data: [] }; })
                 ]);
 
-                const products = prodRes.data;
-                const orders = ordRes.data;
-                const users = userRes.data;
-                const rawCatSales = catSalesRes.data;
+                const products = prodRes.data || [];
+                const orders = ordRes.data || [];
+                const users = userRes.data || [];
+                const rawCatSales = catSalesRes.data || [];
+
+                console.log('[Dashboard] Data received:', { products: products.length, orders: orders.length, users: users.length, catSales: rawCatSales.length });
 
                 // 1. KPIs
                 const activeProducts = products.filter(p => p.active || p.isActive).length;
@@ -52,7 +54,7 @@ export default function AdminDashboard() {
                 const totalRevenue = validOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
                 const avgOrderValue = validOrders.length > 0 ? totalRevenue / validOrders.length : 0;
 
-                const clientsOnly = users.filter(user => !user.roles.some(role => role.name === 'ADMIN'));
+                const clientsOnly = users.filter(user => user.roles && user.roles.some(role => role.name === 'ADMIN'));
 
                 setStats({
                     products: activeProducts,
@@ -68,11 +70,11 @@ export default function AdminDashboard() {
                 setRecentOrders(sortedOrders.slice(0, 5));
 
                 // 3. Ventes par catégories
-                const totalSalesSum = rawCatSales.reduce((sum, item) => sum + item.totalSales, 0);
+                const totalSalesSum = rawCatSales.reduce((sum, item) => sum + (item.totalSales || 0), 0);
                 const formattedCatSales = rawCatSales.map(cat => ({
-                    name: cat.categoryName,
-                    pct: totalSalesSum > 0 ? Math.round((cat.totalSales / totalSalesSum) * 100) : 0,
-                    amount: cat.totalSales
+                    name: cat.categoryName || cat.name || 'Unknown',
+                    pct: totalSalesSum > 0 ? Math.round(((cat.totalSales || 0) / totalSalesSum) * 100) : 0,
+                    amount: cat.totalSales || 0
                 }));
                 setCategorySales(formattedCatSales.slice(0, 5));
 
@@ -84,13 +86,14 @@ export default function AdminDashboard() {
                 }).reverse();
 
                 const salesData = last7Days.map(date => {
-                    const dayOrders = validOrders.filter(o => o.orderDate && o.orderDate.startsWith(date));
+                    const dayOrders = validOrders.filter(o => o.orderDate && String(o.orderDate).startsWith(date));
                     const total = dayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
                     return { date: new Date(date).toLocaleDateString('fr-FR', { weekday: 'short' }), total };
                 });
                 setChartData(salesData);
 
             } catch (error) {
+                console.error('Dashboard fetch error:', error);
                 toast.error('Erreur lors du chargement des statistiques');
             } finally {
                 setLoading(false);
@@ -210,11 +213,13 @@ export default function AdminDashboard() {
                 {/* GRAPH (Nouveau) */}
                 <div className="vad-panel">
                     <div className="vad-panel-title">Revenus des 7 derniers jours</div>
-                    <div style={{ width: '100%', height: 250 }}>
+                    <div style={{ width: '100%', height: 250, minHeight: 250 }}>
                         {loading ? (
                             <p style={{ fontSize: '0.85rem', color: 'var(--bark)' }}>Chargement du graphique...</p>
+                        ) : chartData.length === 0 ? (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--bark)' }}>Aucune donnée disponible.</p>
                         ) : (
-                            <ResponsiveContainer>
+                            <ResponsiveContainer width="100%" height={250}>
                                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">

@@ -14,8 +14,6 @@ import java.io.IOException;
 
 public class RevenueByMonthMR {
 
-    // Input  : order_id, customer_id, status, purchase_timestamp, ...
-    // Output : YYYY-MM → 1 (pour compter les commandes)
     public static class RevenueMapper
             extends Mapper<LongWritable, Text, Text, DoubleWritable> {
 
@@ -26,15 +24,15 @@ public class RevenueByMonthMR {
                 throws IOException, InterruptedException {
             if (isHeader) { isHeader = false; return; }
 
-            String[] f = value.toString().split(",");
+            String[] f = CsvParser.parse(value.toString());
             if (f.length < 4) return;
 
             try {
-                String timestamp = f[3].trim(); // ex: 2017-10-02 10:56:33
-                String month     = timestamp.substring(0, 7); // YYYY-MM
-                // On utilise 1.0 comme valeur — le reducer compte
+                String timestamp = f[3].trim();
+                if (timestamp.length() < 7) return;
+                String month = timestamp.substring(0, 7);
                 context.write(new Text(month), new DoubleWritable(1.0));
-            } catch (Exception e) { /* ignore */ }
+            } catch (Exception e) { }
         }
     }
 
@@ -54,12 +52,9 @@ public class RevenueByMonthMR {
             Put put = new Put(Bytes.toBytes(rowKey));
             byte[] family = Bytes.toBytes("stats");
 
-            put.addColumn(family, Bytes.toBytes("source"),
-                    Bytes.toBytes("historical"));
-            put.addColumn(family, Bytes.toBytes("month"),
-                    Bytes.toBytes(key.toString()));
-            put.addColumn(family, Bytes.toBytes("total_orders"),
-                    Bytes.toBytes(String.valueOf(totalOrders)));
+            put.addColumn(family, Bytes.toBytes("source"),       Bytes.toBytes("historical"));
+            put.addColumn(family, Bytes.toBytes("month"),       Bytes.toBytes(key.toString()));
+            put.addColumn(family, Bytes.toBytes("total_orders"), Bytes.toBytes(String.valueOf(totalOrders)));
 
             context.write(new ImmutableBytesWritable(Bytes.toBytes(rowKey)), put);
         }
