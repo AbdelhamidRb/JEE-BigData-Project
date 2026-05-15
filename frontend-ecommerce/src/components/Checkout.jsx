@@ -10,317 +10,212 @@ export default function Checkout() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('card');
+    const [cardForm, setCardForm] = useState({ cardNumber: '', cardName: '', expiry: '', cvv: '' });
+    const [addressForm, setAddressForm] = useState({ fullName: '', street: '', city: '', postalCode: '', phone: '' });
 
-    const [cardForm, setCardForm] = useState({
-        cardNumber: '',
-        cardName: '',
-        expiry: '',
-        cvv: ''
-    });
-
-    const [addressForm, setAddressForm] = useState({
-        fullName: '',
-        street: '',
-        city: '',
-        postalCode: '',
-        phone: ''
-    });
-
-    const handleChange = (e) => {
-        setAddressForm({ ...addressForm, [e.target.name]: e.target.value });
-    };
-
+    const handleChange = (e) => setAddressForm({ ...addressForm, [e.target.name]: e.target.value });
     const handleCardChange = (e) => {
         let { name, value } = e.target;
-        
-        if (name === 'cardNumber') {
-            value = value.replace(/\s/g, '').replace(/\D/g, '');
-            value = value.substring(0, 16);
-            value = value.replace(/(\d{4})/g, '$1 ').trim();
-        }
-        
-        if (name === 'expiry') {
-            value = value.replace(/\D/g, '');
-            value = value.substring(0, 4);
-            if (value.length > 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2);
-            }
-        }
-        
-        if (name === 'cvv') {
-            value = value.replace(/\D/g, '').substring(0, 3);
-        }
-        
+        if (name === 'cardNumber') { value = value.replace(/\s/g, '').replace(/\D/g, '').substring(0, 16).replace(/(\d{4})/g, '$1 ').trim(); }
+        if (name === 'expiry') { value = value.replace(/\D/g, '').substring(0, 4); if (value.length > 2) value = value.substring(0, 2) + '/' + value.substring(2); }
+        if (name === 'cvv') { value = value.replace(/\D/g, '').substring(0, 3); }
         setCardForm({ ...cardForm, [name]: value });
     };
 
-    const isCardValid = () => {
-        const rawNumber = cardForm.cardNumber.replace(/\s/g, '');
-        return rawNumber.length === 16 && 
-               cardForm.cardName.trim() !== '' && 
-               cardForm.expiry.length === 5 && 
-               cardForm.cvv.length === 3;
-    };
-
-    const isFormValid = () => {
-        const addressValid = Object.values(addressForm).every(val => val.trim() !== '');
-        if (paymentMethod === 'card') {
-            return addressValid && isCardValid();
-        }
-        return addressValid;
-    };
-
-    const processPayment = async () => {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return { transactionId: 'TXN-' + Date.now(), status: 'success' };
-    };
+    const isCardValid = () => cardForm.cardNumber.replace(/\s/g, '').length === 16 && cardForm.cardName.trim() !== '' && cardForm.expiry.length === 5 && cardForm.cvv.length === 3;
+    const isFormValid = () => Object.values(addressForm).every(val => val.trim() !== '') && (paymentMethod !== 'card' || isCardValid());
 
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
-
-        if (cart.length === 0) {
-            toast.error("Votre panier est vide.");
-            return navigate('/dashboard');
-        }
-
-        if (!isFormValid()) {
-            toast.error("Veuillez remplir tous les champs.");
-            return;
-        }
-
+        if (cart.length === 0) { toast.error("Votre panier est vide."); return navigate('/dashboard'); }
+        if (!isFormValid()) { toast.error("Veuillez remplir tous les champs."); return; }
         const result = await Swal.fire({
             title: 'Confirmer la commande',
             text: `Le montant total est de ${cartTotal.toFixed(2)} €. Procéder au paiement ?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#2563eb',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Oui, commander',
-            cancelButtonText: 'Retour'
+            icon: 'question', showCancelButton: true,
+            confirmButtonColor: '#FF5E00', cancelButtonColor: '#6B6B6B',
+            confirmButtonText: 'Oui, commander', cancelButtonText: 'Retour'
         });
-
         if (result.isConfirmed) {
             setLoading(true);
             const loadingToast = toast.loading('Traitement du paiement...');
-
             try {
-                await processPayment();
-                
                 const fullShippingAddress = `${addressForm.fullName}, ${addressForm.street}, ${addressForm.postalCode} ${addressForm.city} (Tél: ${addressForm.phone})`;
-                
                 const payload = {
                     shippingAddress: fullShippingAddress,
-                    items: cart.map(item => ({
-                        productId: item.id,
-                        quantity: item.quantity
-                    }))
+                    items: cart.map(item => ({ productId: item.id, quantity: item.quantity })),
+                    paymentMethod: paymentMethod
                 };
-
-                await api.post('/orders', payload);
-
-                toast.success("Paiement réussi ! Commande validée.", { id: loadingToast });
+                if (paymentMethod === 'card') {
+                    payload.cardNumber = cardForm.cardNumber;
+                    payload.cardHolderName = cardForm.cardName;
+                }
+                const response = await api.post('/orders', payload);
+                const txnId = response.data.payment?.transactionId;
+                toast.success(`Paiement réussi ! Transaction: ${txnId}`, { id: loadingToast });
                 setCart([]);
-
-                Swal.fire({
-                    title: 'Félicitations !',
-                    text: 'Votre paiement a été accepté et votre commande est en cours de préparation.',
-                    icon: 'success',
-                    confirmButtonColor: '#2563eb'
-                }).then(() => {
-                    navigate('/dashboard');
-                });
-
+                Swal.fire({ title: 'Félicitations !', text: `Votre commande a été validée. Réf: ${txnId}`, icon: 'success', confirmButtonColor: '#FF5E00' }).then(() => navigate('/dashboard'));
             } catch (error) {
-                const errorMsg = error.response?.data || "Erreur lors du paiement.";
-                toast.error(errorMsg, { id: loadingToast });
-            } finally {
-                setLoading(false);
-            }
+                toast.error(error.response?.data || "Erreur lors du paiement.", { id: loadingToast });
+            } finally { setLoading(false); }
         }
     };
 
     if (cart.length === 0) {
         return (
-            <div className="max-w-7xl mx-auto p-6 min-h-[70vh] flex flex-col items-center justify-center">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Panier vide</h2>
-                <Link to="/dashboard" className="text-blue-600 hover:underline">Retourner au catalogue</Link>
+            <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", background: '#0A0A0A', color: '#6B6B6B' }}>
+                <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.5rem', color: '#fff', marginBottom: '1rem' }}>Panier vide</h2>
+                <Link to="/dashboard" style={{ color: '#FF5E00' }}>Retourner au catalogue</Link>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 min-h-screen bg-gray-50">
-            <div className="mb-8">
-                <h2 className="text-3xl font-extrabold text-gray-900">Paiement sécurisé</h2>
-                <p className="text-gray-500 mt-2">Dernière étape avant l'expédition de vos articles.</p>
-            </div>
+        <>
+            <style>{`
+                .fch-root { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem; min-height: 100vh; font-family: 'Inter', sans-serif; background: #0A0A0A; color: #E0E0E0; }
+                .fch-header { margin-bottom: 2rem; }
+                .fch-title { font-family: 'Oswald', sans-serif; font-size: 2rem; color: #fff; text-transform: uppercase; }
+                .fch-title .hl { color: #FF5E00; }
+                .fch-sub { color: #6B6B6B; font-size: 0.85rem; margin-top: 0.5rem; }
+                .fch-layout { display: flex; flex-direction: column; gap: 2rem; }
+                @media (min-width: 1024px) { .fch-layout { flex-direction: row; } }
+                .fch-form-section { flex: 2; }
+                .fch-card { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.04); padding: 1.5rem; margin-bottom: 1.5rem; }
+                .fch-card-title { font-family: 'Oswald', sans-serif; font-size: 0.9rem; color: #fff; text-transform: uppercase; margin-bottom: 1.2rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+                .fch-label { display: block; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: #B8B8B8; margin-bottom: 0.4rem; font-weight: 500; }
+                .fch-input { width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #D4D4D4; font-family: 'Inter', sans-serif; font-size: 0.85rem; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+                .fch-input:focus { border-color: #FF5E00; }
+                .fch-input::placeholder { color: #6B6B6B; }
+                .fch-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+                .fch-grid-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+                .fch-payment-options { display: flex; gap: 0.8rem; margin-bottom: 1.2rem; }
+                .fch-payment-opt { flex: 1; padding: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.2s; }
+                .fch-payment-opt.active { border-color: #FF5E00; background: rgba(255,94,0,0.08); }
+                .fch-payment-opt-label { font-size: 0.75rem; color: #D4D4D4; font-weight: 500; }
+                .fch-payment-opt-sub { font-size: 0.65rem; color: #6B6B6B; }
+                .fch-summary { flex: 1; }
+                .fch-summary-card { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.04); padding: 1.5rem; position: sticky; top: 80px; }
+                .fch-summary-title { font-family: 'Oswald', sans-serif; font-size: 1rem; color: #fff; text-transform: uppercase; margin-bottom: 1.2rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+                .fch-summary-item { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.8rem; }
+                .fch-summary-item span:last-child { color: #D4D4D4; }
+                .fch-summary-total { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); margin: 1rem 0; }
+                .fch-summary-total-label { font-family: 'Oswald', sans-serif; font-size: 0.95rem; color: #fff; text-transform: uppercase; }
+                .fch-summary-total-val { font-family: 'Oswald', sans-serif; font-size: 1.6rem; color: #FF5E00; font-weight: 600; }
+                .fch-pay-btn { width: 100%; padding: 1rem; background: #FF5E00; color: #0A0A0A; border: none; cursor: pointer; font-family: 'Oswald', sans-serif; font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+                .fch-pay-btn:hover:not(:disabled) { background: #FF7A2E; box-shadow: 0 4px 16px rgba(255,94,0,0.3); }
+                .fch-pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+                .fch-security { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; color: #6B6B6B; margin-top: 1rem; }
+                .fch-cash-note { background: rgba(255,94,0,0.08); padding: 1rem; font-size: 0.8rem; color: #B8B8B8; border: 1px solid rgba(255,94,0,0.15); }
+                .fch-free { color: #4CAF50; font-weight: 500; }
+                .fch-scroll-items { max-height: 240px; overflow-y: auto; margin-bottom: 1rem; }
+                .fch-scroll-items::-webkit-scrollbar { width: 4px; }
+                .fch-scroll-items::-webkit-scrollbar-thumb { background: #FF5E00; border-radius: 2px; }
+            `}</style>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                <div className="lg:w-2/3">
-                    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-6">
-                        <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-4">Adresse de livraison</h3>
-                        <form className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
-                                    <input type="text" name="fullName" value={addressForm.fullName} onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Jean Dupont" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                                    <input type="text" name="street" value={addressForm.street} onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="123 Avenue des Champs-Élysées" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Code Postal</label>
-                                    <input type="text" name="postalCode" value={addressForm.postalCode} onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="75008" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-                                    <input type="text" name="city" value={addressForm.city} onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paris" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                                    <input type="tel" name="phone" value={addressForm.phone} onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="+33 6 12 34 56 78" />
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                        <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-4">Mode de paiement</h3>
-                        
-                        <div className="flex gap-4 mb-6">
-                            <button type="button"
-                                onClick={() => setPaymentMethod('card')}
-                                className={`flex-1 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'card' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                    </svg>
-                                    <div className="text-left">
-                                        <div className="font-bold">Carte bancaire</div>
-                                        <div className="text-xs text-gray-500">Visa, Mastercard...</div>
-                                    </div>
-                                </div>
-                            </button>
-                            
-                            <button type="button"
-                                onClick={() => setPaymentMethod('cash')}
-                                className={`flex-1 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'cash' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6m0 0h6m6 0v6a2 2 0 002 2h2a2 2 0 002-2v-6m0 0H9" />
-                                    </svg>
-                                    <div className="text-left">
-                                        <div className="font-bold">Espèces</div>
-                                        <div className="text-xs text-gray-500">Paiement à réception</div>
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
-
-                        {paymentMethod === 'card' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de carte</label>
-                                    <input type="text" name="cardNumber" value={cardForm.cardNumber} onChange={handleCardChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1234 5678 9012 3456" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nom sur la carte</label>
-                                    <input type="text" name="cardName" value={cardForm.cardName} onChange={handleCardChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="JEAN DUPONT" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Expiration</label>
-                                        <input type="text" name="expiry" value={cardForm.expiry} onChange={handleCardChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="MM/YY" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
-                                        <input type="text" name="cvv" value={cardForm.cvv} onChange={handleCardChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="123" />
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    <span>Paiement 100% sécurisé - Vos données sont chiffrées</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {paymentMethod === 'cash' && (
-                            <div className="bg-yellow-50 p-4 rounded-lg text-sm text-yellow-800">
-                                Vous paierez en espèces lors de la réception de votre commande. Un acompte de 10% sera demandé pour confirmer la commande.
-                            </div>
-                        )}
-                    </div>
+            <div className="fch-root">
+                <div className="fch-header">
+                    <h2 className="fch-title">Paiement <span className="hl">sécurisé</span></h2>
+                    <p className="fch-sub">Dernière étape avant l'expédition de vos articles.</p>
                 </div>
 
-                <div className="lg:w-1/3">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
-                        <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-4">Résumé</h3>
-
-                        <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
-                            {cart.map(item => (
-                                <div key={item.id} className="flex justify-between items-center text-sm">
-                                    <div className="flex items-center gap-3">
-                                        <span className="font-bold text-gray-500">{item.quantity}x</span>
-                                        <span className="text-gray-800 line-clamp-1">{item.name}</span>
-                                    </div>
-                                    <span className="font-bold text-gray-900">{(item.price * item.quantity).toFixed(2)} €</span>
+                <div className="fch-layout">
+                    <div className="fch-form-section">
+                        <div className="fch-card">
+                            <div className="fch-card-title">Adresse de livraison</div>
+                            <div className="fch-grid-2">
+                                <div style={{ gridColumn: 'span 2' }}>
+                                    <label className="fch-label">Nom complet</label>
+                                    <input type="text" name="fullName" value={addressForm.fullName} onChange={handleChange} className="fch-input" placeholder="Jean Dupont" />
                                 </div>
-                            ))}
+                                <div style={{ gridColumn: 'span 2' }}>
+                                    <label className="fch-label">Adresse</label>
+                                    <input type="text" name="street" value={addressForm.street} onChange={handleChange} className="fch-input" placeholder="123 Avenue des Champs-Élysées" />
+                                </div>
+                                <div>
+                                    <label className="fch-label">Code Postal</label>
+                                    <input type="text" name="postalCode" value={addressForm.postalCode} onChange={handleChange} className="fch-input" placeholder="75008" />
+                                </div>
+                                <div>
+                                    <label className="fch-label">Ville</label>
+                                    <input type="text" name="city" value={addressForm.city} onChange={handleChange} className="fch-input" placeholder="Paris" />
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }}>
+                                    <label className="fch-label">Téléphone</label>
+                                    <input type="tel" name="phone" value={addressForm.phone} onChange={handleChange} className="fch-input" placeholder="+33 6 12 34 56 78" />
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="border-t border-gray-100 pt-4 mb-8 space-y-2">
-                            <div className="flex justify-between text-gray-600">
-                                <span>Sous-total</span>
-                                <span>{cartTotal.toFixed(2)} €</span>
+                        <div className="fch-card">
+                            <div className="fch-card-title">Mode de paiement</div>
+                            <div className="fch-payment-options">
+                                <div className={`fch-payment-opt ${paymentMethod === 'card' ? 'active' : ''}`} onClick={() => setPaymentMethod('card')}>
+                                    <div className="fch-payment-opt-label">Carte bancaire</div>
+                                    <div className="fch-payment-opt-sub">Visa, Mastercard...</div>
+                                </div>
+                                <div className={`fch-payment-opt ${paymentMethod === 'cash' ? 'active' : ''}`} onClick={() => setPaymentMethod('cash')}>
+                                    <div className="fch-payment-opt-label">Espèces</div>
+                                    <div className="fch-payment-opt-sub">Paiement à réception</div>
+                                </div>
                             </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span>Livraison</span>
-                                <span className="text-green-600 font-bold">Gratuite</span>
-                            </div>
-                            <div className="flex justify-between items-center pt-4">
-                                <span className="text-lg font-bold text-gray-900">Total</span>
-                                <span className="text-2xl font-black text-blue-600">{cartTotal.toFixed(2)} €</span>
-                            </div>
-                        </div>
 
-                        <button
-                            onClick={handlePlaceOrder}
-                            disabled={!isFormValid() || loading}
-                            className={`w-full py-4 rounded-lg font-bold text-lg shadow-md transition-all flex justify-center items-center gap-2 ${
-                                !isFormValid() || loading
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-green-600 hover:bg-green-700 text-white hover:shadow-lg'
-                            }`}
-                        >
-                            {loading ? (
-                                <>
-                                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                    </svg>
-                                    Traitement...
-                                </>
-                            ) : (
-                                <>Payer {cartTotal.toFixed(2)} € 🔒</>
+                            {paymentMethod === 'card' && (
+                                <div className="fch-grid-2">
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <label className="fch-label">Numéro de carte</label>
+                                        <input type="text" name="cardNumber" value={cardForm.cardNumber} onChange={handleCardChange} className="fch-input" placeholder="1234 5678 9012 3456" />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <label className="fch-label">Nom sur la carte</label>
+                                        <input type="text" name="cardName" value={cardForm.cardName} onChange={handleCardChange} className="fch-input" placeholder="JEAN DUPONT" />
+                                    </div>
+                                    <div>
+                                        <label className="fch-label">Expiration</label>
+                                        <input type="text" name="expiry" value={cardForm.expiry} onChange={handleCardChange} className="fch-input" placeholder="MM/YY" />
+                                    </div>
+                                    <div>
+                                        <label className="fch-label">CVV</label>
+                                        <input type="text" name="cvv" value={cardForm.cvv} onChange={handleCardChange} className="fch-input" placeholder="123" />
+                                    </div>
+                                </div>
                             )}
-                        </button>
+                            {paymentMethod === 'cash' && (
+                                <div className="fch-cash-note">
+                                    Vous paierez en espèces lors de la réception de votre commande.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="fch-summary">
+                        <div className="fch-summary-card">
+                            <div className="fch-summary-title">Résumé</div>
+                            <div className="fch-scroll-items">
+                                {cart.map(item => (
+                                    <div key={item.id} className="fch-summary-item">
+                                        <span>{item.quantity}x {item.name}</span>
+                                        <span>{(item.price * item.quantity).toFixed(2)} €</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="fch-summary-item"><span>Sous-total</span><span>{cartTotal.toFixed(2)} €</span></div>
+                            <div className="fch-summary-item"><span>Livraison</span><span className="fch-free">Gratuite</span></div>
+                            <div className="fch-summary-total">
+                                <span className="fch-summary-total-label">Total</span>
+                                <span className="fch-summary-total-val">{cartTotal.toFixed(2)} €</span>
+                            </div>
+                            <button onClick={handlePlaceOrder} disabled={!isFormValid() || loading} className="fch-pay-btn">
+                                {loading ? 'Traitement...' : `Payer ${cartTotal.toFixed(2)} €`}
+                            </button>
+                            <div className="fch-security">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF5E00" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                Paiement 100% sécurisé
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

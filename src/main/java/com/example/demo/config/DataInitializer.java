@@ -4,9 +4,6 @@ import com.example.demo.entities.*;
 import com.example.demo.repositories.*;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -45,10 +42,11 @@ public class DataInitializer implements CommandLineRunner {
     private OrderItemRepository orderItemRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private Connection hbaseConnection;
 
     private static final String DATA_DIR = "/tmp/olist/";
     private Map<String, String> ptToEnCategory = new LinkedHashMap<>();
-    private Configuration hbaseConfig;
 
     @Override
     public void run(String... args) throws Exception {
@@ -369,13 +367,10 @@ public class DataInitializer implements CommandLineRunner {
 
     private void writeToHBase() {
         log.info("[DataInit] Writing data to HBase...");
-        hbaseConfig = HBaseConfiguration.create();
-        hbaseConfig.set("hbase.zookeeper.quorum", "hbase-master");
-        hbaseConfig.set("hbase.zookeeper.property.clientPort", "2181");
-        hbaseConfig.set("zookeeper.session.timeout", "60000");
-        hbaseConfig.set("hbase.client.retries.number", "3");
 
-        if (!waitForHBase(30)) {
+        try {
+            hbaseConnection.getAdmin().listTableNames();
+        } catch (Exception e) {
             log.warn("[DataInit] HBase not available — skipping HBase write");
             return;
         }
@@ -387,24 +382,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info("[DataInit] HBase write complete!");
         } catch (Exception e) {
             log.error("[DataInit] Error writing to HBase: {}", e.getMessage());
-            e.printStackTrace();
         }
-    }
-
-    private boolean waitForHBase(int maxSeconds) {
-        for (int i = 0; i < maxSeconds / 5; i++) {
-            try (Connection conn = ConnectionFactory.createConnection(hbaseConfig)) {
-                Admin admin = conn.getAdmin();
-                admin.listTableNames();
-                admin.close();
-                conn.close();
-                return true;
-            } catch (Exception e) {
-                log.info("[DataInit] Waiting for HBase... attempt {}", i + 1);
-                try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
-            }
-        }
-        return false;
     }
 
     private void writeSalesByCategory() throws IOException {
@@ -422,9 +400,7 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        try (Connection conn = ConnectionFactory.createConnection(hbaseConfig);
-             Table table = conn.getTable(TableName.valueOf("analytics_sales_by_category"))) {
-
+        try (Table table = hbaseConnection.getTable(TableName.valueOf("analytics_sales_by_category"))) {
             for (Map.Entry<String, Double> entry : revenueByCategory.entrySet()) {
                 String cat = entry.getKey().replace(" ", "_").toLowerCase();
                 String rowKey = "hist_cat_" + cat;
@@ -450,9 +426,7 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        try (Connection conn = ConnectionFactory.createConnection(hbaseConfig);
-             Table table = conn.getTable(TableName.valueOf("analytics_revenue_by_month"))) {
-
+        try (Table table = hbaseConnection.getTable(TableName.valueOf("analytics_revenue_by_month"))) {
             for (Map.Entry<String, Integer> entry : ordersByMonth.entrySet()) {
                 String rowKey = "hist_" + entry.getKey();
                 Put put = new Put(Bytes.toBytes(rowKey));
@@ -466,13 +440,9 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void writeReviewsByCategory() throws IOException {
-        try (Connection conn = ConnectionFactory.createConnection(hbaseConfig);
-             Table table = conn.getTable(TableName.valueOf("analytics_reviews_by_category"))) {
-
+        try (Table table = hbaseConnection.getTable(TableName.valueOf("analytics_reviews_by_category"))) {
             int[] scoreDistribution = {5000, 2000, 3000, 20000, 45000};
             int[] scores = {1, 2, 3, 4, 5};
-            int total = 0;
-            for (int d : scoreDistribution) total += d;
 
             for (int i = 0; i < scores.length; i++) {
                 int score = scores[i];

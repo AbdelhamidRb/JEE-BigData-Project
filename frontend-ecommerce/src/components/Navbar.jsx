@@ -17,227 +17,199 @@ export default function Navbar() {
     };
 
     const isActive = (path) => location.pathname === path;
-
-    // Clear derived states — no ambiguity
-    const isGuest       = !isAuthenticated;
+    const isGuest = !isAuthenticated;
     const isRegularUser = isAuthenticated && userRole !== 'ADMIN';
-    const isAdmin       = isAuthenticated && userRole === 'ADMIN';
+    const isAdmin = isAuthenticated && userRole === 'ADMIN';
 
     return (
         <>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
-
-                :root {
-                    --cream: #F5F0E8; --sand: #E8DDD0; --bark: #B8A898;
-                    --earth: #6B5B4E; --charcoal: #2A2420; --black: #0F0D0C;
-                    --accent: #C8472A; --gold: #C9A96E; --white: #FDFAF7;
-                }
-
-                .vn-nav {
+                .fn-nav {
                     position: sticky; top: 0; z-index: 100;
-                    background: rgba(253,250,247,0.93);
+                    background: rgba(10,10,10,0.92);
                     backdrop-filter: blur(14px);
-                    border-bottom: 1px solid rgba(184,168,152,0.28);
-                    font-family: 'DM Sans', sans-serif;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                    font-family: 'Inter', sans-serif;
                 }
-                .vn-inner {
+                .fn-inner {
                     max-width: 1280px; margin: 0 auto;
-                    padding: 0 3rem; height: 68px;
+                    padding: 0 3rem; height: 64px;
                     display: flex; align-items: center; justify-content: space-between;
                 }
-
-                .vn-logo {
-                    font-family: 'Playfair Display', serif;
-                    font-size: 1.55rem; letter-spacing: 0.1em;
-                    color: var(--black); text-decoration: none; flex-shrink: 0;
-                    transition: opacity 0.2s;
+                .fn-logo {
+                    font-family: 'Oswald', sans-serif;
+                    font-size: 1.4rem; letter-spacing: 0.08em;
+                    color: #fff; text-decoration: none; flex-shrink: 0;
+                    display: flex; align-items: center; gap: 8px;
                 }
-                .vn-logo:hover { opacity: 0.75; }
-
-                .vn-links {
-                    display: flex; gap: 2.2rem;
+                .fn-logo-mark {
+                    width: 28px; height: 28px;
+                    background: #FF5E00;
+                    display: flex; align-items: center; justify-content: center;
+                    font-weight: 700; font-size: 0.9rem; color: #0A0A0A; line-height: 1;
+                }
+                .fn-links {
+                    display: flex; gap: 2rem;
                     list-style: none; margin: 0; padding: 0;
                 }
-                .vn-links a {
-                    font-size: 0.73rem; letter-spacing: 0.14em; text-transform: uppercase;
-                    color: var(--earth); text-decoration: none; transition: color 0.2s;
+                .fn-links a {
+                    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+                    color: #B8B8B8; text-decoration: none; transition: color 0.2s;
                     position: relative; padding-bottom: 2px;
                 }
-                .vn-links a:hover { color: var(--black); }
-                .vn-links a.active { color: var(--black); }
-                .vn-links a.active::after {
-                    content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
-                    height: 1px; background: var(--gold);
+                .fn-links a:hover { color: #fff; }
+                .fn-links a::after {
+                    content: ''; position: absolute; bottom: -2px; left: 0;
+                    width: 0; height: 2px; background: #FF5E00;
+                    transition: width 0.3s ease;
                 }
-
-                .vn-actions { display: flex; align-items: center; gap: 0.8rem; }
-
-                .vn-divider {
-                    width: 1px; height: 20px;
-                    background: rgba(184,168,152,0.4); margin: 0 0.4rem;
-                }
-
-                .vn-link {
-                    font-size: 0.73rem; letter-spacing: 0.13em; text-transform: uppercase;
-                    color: var(--earth); text-decoration: none;
+                .fn-links a:hover::after { width: 100%; }
+                .fn-actions { display: flex; align-items: center; gap: 0.6rem; }
+                .fn-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.1); margin: 0 0.3rem; }
+                .fn-link {
+                    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+                    color: #B8B8B8; text-decoration: none;
                     transition: color 0.2s; white-space: nowrap;
                 }
-                .vn-link:hover { color: var(--black); }
-
-                .vn-btn-ghost {
-                    font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase;
-                    padding: 0.52rem 1.2rem;
-                    background: transparent; color: var(--charcoal);
-                    border: 1px solid var(--bark); border-radius: 2px;
+                .fn-link:hover { color: #fff; }
+                .fn-btn-ghost {
+                    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+                    padding: 0.45rem 1.1rem;
+                    background: transparent; color: #D4D4D4;
+                    border: 1px solid rgba(255,255,255,0.15);
                     text-decoration: none; display: inline-block; cursor: pointer;
-                    font-family: 'DM Sans', sans-serif;
-                    transition: border-color 0.2s, color 0.2s; white-space: nowrap;
+                    font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
                 }
-                .vn-btn-ghost:hover { border-color: var(--charcoal); color: var(--black); }
-
-                .vn-btn-solid {
-                    font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase;
-                    padding: 0.52rem 1.2rem;
-                    background: var(--charcoal); color: var(--white);
-                    border: 1px solid var(--charcoal); border-radius: 2px;
+                .fn-btn-ghost:hover { border-color: #FF5E00; color: #FF5E00; }
+                .fn-btn-solid {
+                    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+                    padding: 0.45rem 1.1rem;
+                    background: #FF5E00; color: #0A0A0A;
+                    border: 1px solid #FF5E00;
                     text-decoration: none; display: inline-block; cursor: pointer;
-                    font-family: 'DM Sans', sans-serif; transition: background 0.2s;
-                    white-space: nowrap;
+                    font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap;
+                    font-weight: 600;
                 }
-                .vn-btn-solid:hover { background: var(--black); border-color: var(--black); }
-
-                .vn-btn-logout {
-                    font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase;
-                    padding: 0.52rem 1.2rem;
-                    background: transparent; color: var(--accent);
-                    border: 1px solid rgba(200,71,42,0.35); border-radius: 2px;
-                    cursor: pointer; font-family: 'DM Sans', sans-serif;
-                    transition: background 0.2s, color 0.2s, border-color 0.2s; white-space: nowrap;
+                .fn-btn-solid:hover { background: #FF7A2E; border-color: #FF7A2E; }
+                .fn-btn-logout {
+                    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+                    padding: 0.45rem 1.1rem;
+                    background: transparent; color: rgba(255,255,255,0.4);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    cursor: pointer; font-family: 'Inter', sans-serif;
+                    transition: all 0.2s; white-space: nowrap;
                 }
-                .vn-btn-logout:hover { background: var(--accent); color: var(--white); border-color: var(--accent); }
-
-                .vn-admin-badge {
-                    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
-                    padding: 0.52rem 1.1rem;
-                    background: var(--cream); color: var(--earth);
-                    border: 1px solid var(--sand); border-radius: 2px;
+                .fn-btn-logout:hover { border-color: rgba(255,94,0,0.4); color: #FF5E00; }
+                .fn-admin-badge {
+                    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+                    padding: 0.45rem 1rem;
+                    background: rgba(255,94,0,0.1); color: #FF5E00;
+                    border: 1px solid rgba(255,94,0,0.2);
                     text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
-                    font-family: 'DM Sans', sans-serif; font-weight: 500;
-                    transition: background 0.2s, border-color 0.2s; white-space: nowrap;
+                    font-family: 'Inter', sans-serif; font-weight: 500;
+                    transition: all 0.2s; white-space: nowrap;
                 }
-                .vn-admin-badge:hover { background: var(--sand); border-color: var(--bark); }
-                .vn-admin-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
-
-                .vn-cart {
+                .fn-admin-badge:hover { background: rgba(255,94,0,0.15); border-color: rgba(255,94,0,0.3); }
+                .fn-admin-dot { width: 6px; height: 6px; border-radius: 50%; background: #FF5E00; flex-shrink: 0; }
+                .fn-cart {
                     position: relative;
                     display: inline-flex; align-items: center; justify-content: center;
-                    width: 38px; height: 38px;
-                    background: var(--cream); border: 1px solid var(--sand);
-                    border-radius: 2px; text-decoration: none; color: var(--charcoal);
-                    transition: background 0.2s, border-color 0.2s;
+                    width: 36px; height: 36px;
+                    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                    text-decoration: none; color: #D4D4D4;
+                    transition: all 0.2s;
                 }
-                .vn-cart:hover { background: var(--sand); border-color: var(--bark); }
-                .vn-cart svg { width: 16px; height: 16px; stroke: var(--charcoal); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-                .vn-cart-badge {
-                    position: absolute; top: -7px; right: -7px;
-                    min-width: 18px; height: 18px; padding: 0 4px;
-                    background: var(--accent); color: white;
-                    font-size: 0.6rem; font-weight: 500; letter-spacing: 0; border-radius: 9px;
+                .fn-cart:hover { background: rgba(255,94,0,0.1); border-color: rgba(255,94,0,0.3); color: #FF5E00; }
+                .fn-cart svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+                .fn-cart-badge {
+                    position: absolute; top: -6px; right: -6px;
+                    min-width: 16px; height: 16px; padding: 0 4px;
+                    background: #FF5E00; color: #0A0A0A;
+                    font-size: 0.55rem; font-weight: 700; border-radius: 8px;
                     display: flex; align-items: center; justify-content: center;
-                    border: 2px solid var(--white); font-family: 'DM Sans', sans-serif;
+                    font-family: 'Inter', sans-serif;
                 }
-
-                .vn-wishlist {
+                .fn-wishlist {
                     position: relative;
                     display: inline-flex; align-items: center; justify-content: center;
-                    width: 38px; height: 38px;
-                    background: var(--cream); border: 1px solid var(--sand);
-                    border-radius: 2px; text-decoration: none; color: var(--charcoal);
-                    transition: background 0.2s, border-color 0.2s;
+                    width: 36px; height: 36px;
+                    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                    text-decoration: none; color: #D4D4D4;
+                    transition: all 0.2s;
                 }
-                .vn-wishlist:hover { background: var(--sand); border-color: var(--bark); }
-                .vn-wishlist svg { width: 16px; height: 16px; stroke: var(--charcoal); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-
+                .fn-wishlist:hover { background: rgba(255,94,0,0.1); border-color: rgba(255,94,0,0.3); color: #FF5E00; }
+                .fn-wishlist svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
                 @media (max-width: 768px) {
-                    .vn-inner { padding: 0 1.2rem; }
-                    .vn-links { display: none; }
+                    .fn-inner { padding: 0 1.2rem; }
+                    .fn-links { display: none; }
                 }
             `}</style>
 
-            <nav className="vn-nav">
-                <div className="vn-inner">
+            <nav className="fn-nav">
+                <div className="fn-inner">
+                    <Link to="/" className="fn-logo">
+                        <div className="fn-logo-mark">I</div>
+                        <span>InsightCart</span>
+                    </Link>
 
-                    {/* LOGO — always */}
-                    <Link to="/" className="vn-logo">InsightCart</Link>
-
-                    {/* CENTER LINKS — regular users only */}
                     {isRegularUser && (
-                        <ul className="vn-links">
-                            <li><Link to="/" className={isActive('/') ? 'active' : ''}>Accueil</Link></li>
-                            <li><Link to="/produits" className={isActive('/produits') ? 'active' : ''}>Catalogue</Link></li>
-                            <li><Link to="/wishlist" className={isActive('/wishlist') ? 'active' : ''}>Favoris</Link></li>
-                            <li><Link to="/mes-commandes" className={isActive('/mes-commandes') ? 'active' : ''}>Mes Commandes</Link></li>
-                            <li><Link to="/profil" className={isActive('/profil') ? 'active' : ''}>Profil</Link></li>
-                            <li><Link to="/apropos" className={isActive('/apropos') ? 'active' : ''}>À Propos</Link></li>
+                        <ul className="fn-links">
+                            <li><Link to="/">Accueil</Link></li>
+                            <li><Link to="/produits">Catalogue</Link></li>
+                            <li><Link to="/wishlist">Favoris</Link></li>
+                            <li><Link to="/mes-commandes">Mes Commandes</Link></li>
+                            <li><Link to="/profil">Profil</Link></li>
+                            <li><Link to="/apropos">À Propos</Link></li>
                         </ul>
                     )}
 
-                    {/* RIGHT ACTIONS */}
-                    <div className="vn-actions">
+                    <div className="fn-actions">
+                        {isGuest && (
+                            <>
+                                <Link to="/login" className="fn-link">Connexion</Link>
+                                <Link to="/register" className="fn-btn-solid">S'inscrire</Link>
+                            </>
+                        )}
 
-                    {/* ── GUEST ── login + register only */}
-                    {isGuest && (
-                        <>
-                            <Link to="/login" className="vn-link">Connexion</Link>
-                            <Link to="/register" className="vn-btn-solid">Créer un compte</Link>
-                        </>
-                    )}
-
-                    {/* ── APROPOS ── visible to all users for easy access (moved into center links above) */}
-
-                        {/* ── ADMIN ── admin panel + logout only */}
                         {isAdmin && (
                             <>
-                                <Link to="/admin/dashboard" className="vn-admin-badge">
-                                    <span className="vn-admin-dot" />
-                                    Espace Admin
+                                <Link to="/admin/dashboard" className="fn-admin-badge">
+                                    <span className="fn-admin-dot" />
+                                    Admin
                                 </Link>
-                                <div className="vn-divider" />
-                                <button onClick={handleLogout} className="vn-btn-logout">
+                                <div className="fn-divider" />
+                                <button onClick={handleLogout} className="fn-btn-logout">
                                     Déconnexion
                                 </button>
                             </>
                         )}
 
-                        {/* ── REGULAR USER ── cart + logout only */}
                         {isRegularUser && (
                             <>
-                                <Link to="/cart" className="vn-cart" title="Mon panier">
+                                <Link to="/cart" className="fn-cart" title="Mon panier">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
                                         <line x1="3" y1="6" x2="21" y2="6"/>
                                         <path d="M16 10a4 4 0 0 1-8 0"/>
                                     </svg>
                                     {cartCount > 0 && (
-                                        <span className="vn-cart-badge">{cartCount}</span>
+                                        <span className="fn-cart-badge">{cartCount}</span>
                                     )}
                                 </Link>
-                                <Link to="/wishlist" className="vn-wishlist" title="Ma liste de souhaits">
-                                    <svg viewBox="0 0 24 24" style={{ fill: wishlistCount > 0 ? '#C8472A' : 'none' }}>
+                                <Link to="/wishlist" className="fn-wishlist" title="Ma liste de souhaits">
+                                    <svg viewBox="0 0 24 24" style={{ fill: wishlistCount > 0 ? '#FF5E00' : 'none' }}>
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                                     </svg>
                                     {wishlistCount > 0 && (
-                                        <span className="vn-cart-badge">{wishlistCount}</span>
+                                        <span className="fn-cart-badge">{wishlistCount}</span>
                                     )}
                                 </Link>
-                                <div className="vn-divider" />
-                                <button onClick={handleLogout} className="vn-btn-logout">
+                                <div className="fn-divider" />
+                                <button onClick={handleLogout} className="fn-btn-logout">
                                     Déconnexion
                                 </button>
                             </>
                         )}
-
                     </div>
                 </div>
             </nav>

@@ -4,9 +4,9 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 
 const STATUS_MAP = {
-    'EN_ATTENTE': { label: 'En préparation', color: '#854F0B', bg: '#FAEEDA', dot: '#EF9F27' },
-    'LIVRE':      { label: 'Livrée', color: '#3B6D11', bg: '#EAF3DE', dot: '#639922' },
-    'ANNULE':     { label: 'Annulée', color: '#A32D2D', bg: '#FCEBEB', dot: '#E24B4A' }
+    'EN_ATTENTE': { label: 'En préparation', color: '#FF5E00', bg: 'rgba(255,94,0,0.12)', dot: '#FF5E00' },
+    'LIVRE':      { label: 'Livrée', color: '#4CAF50', bg: 'rgba(76,175,80,0.12)', dot: '#4CAF50' },
+    'ANNULE':     { label: 'Annulée', color: '#E24B4A', bg: 'rgba(226,75,74,0.12)', dot: '#E24B4A' }
 };
 
 export default function MyOrders() {
@@ -20,97 +20,74 @@ export default function MyOrders() {
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}>Chargement...</div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: '5rem', color: '#6B6B6B', fontFamily: "'Inter', sans-serif" }}>Chargement...</div>;
 
     return (
         <>
             <style>{`
-                .vmo-root { max-width: 900px; margin: 3rem auto; padding: 0 1.5rem; font-family: 'DM Sans', sans-serif; }
-                .vmo-title { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #0F0D0C; margin-bottom: 2rem; }
-                .vmo-title em { font-style: italic; color: #6B5B4E; }
-
-                .vmo-card { background: #FDFAF7; border: 1px solid #E8DDD0; border-radius: 3px; margin-bottom: 1.5rem; }
-                .vmo-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid #E8DDD0; display: flex; justify-content: space-between; align-items: center; background: #F5F0E8; }
-
-                .vmo-info-group { display: flex; gap: 2rem; }
-                .vmo-info-item span { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: #B8A898; margin-bottom: 4px; }
-                .vmo-info-item strong { font-size: 0.9rem; color: #2A2420; }
-
-                .vmo-status { display: inline-flex; align-items: center; gap: 6px; padding: 0.3rem 0.8rem; border-radius: 2px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; }
-                .vmo-status-dot { width: 6px; height: 6px; border-radius: 50%; }
-
-                .vmo-body { padding: 1.5rem; }
-                .vmo-item { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #E8DDD0; margin-bottom: 1rem; }
-                .vmo-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-
-                .vmo-item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 2px; border: 1px solid #E8DDD0; }
-                .vmo-item-details { flex: 1; }
-                .vmo-item-name { font-size: 0.9rem; font-weight: 500; color: #0F0D0C; margin-bottom: 4px; }
-                .vmo-item-meta { font-size: 0.8rem; color: #6B5B4E; }
-
-                .vmo-item-price { font-weight: 500; color: #2A2420; }
-
-                .vmo-footer { padding: 1.2rem 1.5rem; border-top: 1px solid #E8DDD0; display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
-                .vmo-total-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #6B5B4E; }
-                .vmo-total-val { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #0F0D0C; }
-
-                .vmo-empty { text-align: center; padding: 4rem 0; color: #B8A898; }
-                .vmo-btn { display: inline-block; margin-top: 1rem; padding: 0.6rem 1.5rem; background: #2A2420; color: #FFF; text-decoration: none; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; border-radius: 2px; }
+                .fmo-root { max-width: 900px; margin: 2.5rem auto; padding: 0 1.5rem; font-family: 'Inter', sans-serif; }
+                .fmo-title { font-family: 'Oswald', sans-serif; font-size: 2.2rem; color: #fff; margin-bottom: 2rem; text-transform: uppercase; }
+                .fmo-title .hl { color: #FF5E00; }
+                .fmo-card { background: #1A1A1A; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 1.2rem; }
+                .fmo-header { padding: 1rem 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+                .fmo-info-group { display: flex; gap: 1.5rem; }
+                .fmo-info-item span { display: block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: #6B6B6B; margin-bottom: 4px; }
+                .fmo-info-item strong { font-size: 0.85rem; color: #D4D4D4; }
+                .fmo-status { display: inline-flex; align-items: center; gap: 6px; padding: 0.25rem 0.7rem; font-size: 0.65rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em; }
+                .fmo-status-dot { width: 6px; height: 6px; border-radius: 50%; }
+                .fmo-body { padding: 1.2rem; }
+                .fmo-item { display: flex; align-items: center; gap: 1rem; padding-bottom: 0.8rem; border-bottom: 1px dashed rgba(255,255,255,0.04); margin-bottom: 0.8rem; }
+                .fmo-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+                .fmo-item-img { width: 56px; height: 56px; object-fit: cover; border: 1px solid rgba(255,255,255,0.06); filter: grayscale(40%); }
+                .fmo-item-details { flex: 1; }
+                .fmo-item-name { font-size: 0.85rem; font-weight: 500; color: #D4D4D4; margin-bottom: 4px; }
+                .fmo-item-meta { font-size: 0.75rem; color: #6B6B6B; }
+                .fmo-item-price { font-weight: 500; color: #FF5E00; font-family: 'Oswald', sans-serif; }
+                .fmo-footer { padding: 1rem 1.2rem; border-top: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
+                .fmo-total-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: #6B6B6B; }
+                .fmo-total-val { font-family: 'Oswald', sans-serif; font-size: 1.3rem; font-weight: 600; color: #FF5E00; }
+                .fmo-empty { text-align: center; padding: 4rem 0; color: #6B6B6B; }
+                .fmo-btn { display: inline-block; margin-top: 1rem; padding: 0.6rem 1.5rem; background: #FF5E00; color: #0A0A0A; text-decoration: none; text-transform: uppercase; font-family: 'Oswald', sans-serif; letter-spacing: 0.12em; font-size: 0.72rem; font-weight: 600; }
             `}</style>
-
-            <div className="vmo-root">
-                <h1 className="vmo-title">Mes <em>Commandes</em></h1>
-
+            <div className="fmo-root">
+                <h1 className="fmo-title">Mes <span className="hl">Commandes</span></h1>
                 {orders.length === 0 ? (
-                    <div className="vmo-empty">
+                    <div className="fmo-empty">
                         <p>Vous n'avez pas encore passé de commande.</p>
-                        <Link to="/produits" className="vmo-btn">Découvrir nos produits</Link>
+                        <Link to="/produits" className="fmo-btn">Découvrir nos produits</Link>
                     </div>
-                ) : (
-                    orders.map(order => {
-                        const status = STATUS_MAP[order.status] || STATUS_MAP['EN_ATTENTE'];
-                        return (
-                            <div key={order.id} className="vmo-card">
-                                <div className="vmo-header">
-                                    <div className="vmo-info-group">
-                                        <div className="vmo-info-item">
-                                            <span>Commande</span>
-                                            <strong>#{order.id}</strong>
-                                        </div>
-                                        <div className="vmo-info-item">
-                                            <span>Date</span>
-                                            <strong>{new Date(order.orderDate).toLocaleDateString('fr-FR')}</strong>
-                                        </div>
-                                    </div>
-                                    <div className="vmo-status" style={{ background: status.bg, color: status.color }}>
-                                        <span className="vmo-status-dot" style={{ background: status.dot }}></span>
-                                        {status.label}
-                                    </div>
+                ) : orders.map(order => {
+                    const status = STATUS_MAP[order.status] || STATUS_MAP['EN_ATTENTE'];
+                    return (
+                        <div key={order.id} className="fmo-card">
+                            <div className="fmo-header">
+                                <div className="fmo-info-group">
+                                    <div className="fmo-info-item"><span>Commande</span><strong>#{order.id}</strong></div>
+                                    <div className="fmo-info-item"><span>Date</span><strong>{new Date(order.orderDate).toLocaleDateString('fr-FR')}</strong></div>
                                 </div>
-
-                                <div className="vmo-body">
-                                    {order.orderItems.map(item => (
-                                        <div key={item.id} className="vmo-item">
-                                            <img src={item.product?.imageUrl || '/placeholder.png'} alt="Produit" className="vmo-item-img" />
-                                            <div className="vmo-item-details">
-                                                <div className="vmo-item-name">{item.product?.name || 'Produit indisponible'}</div>
-                                                <div className="vmo-item-meta">Qté : {item.quantity}</div>
-                                            </div>
-                                            <div className="vmo-item-price">
-                                                {Number(item.price).toFixed(2)} $
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="vmo-footer">
-                                    <span className="vmo-total-label">Total TTC :</span>
-                                    <span className="vmo-total-val">{Number(order.totalAmount).toFixed(2)} $</span>
+                                <div className="fmo-status" style={{ background: status.bg, color: status.color }}>
+                                    <span className="fmo-status-dot" style={{ background: status.dot }} />{status.label}
                                 </div>
                             </div>
-                        );
-                    })
-                )}
+                            <div className="fmo-body">
+                                {order.orderItems.map(item => (
+                                    <div key={item.id} className="fmo-item">
+                                        <img src={item.product?.imageUrl || '/placeholder.png'} alt="Produit" className="fmo-item-img" />
+                                        <div className="fmo-item-details">
+                                            <div className="fmo-item-name">{item.product?.name || 'Produit indisponible'}</div>
+                                            <div className="fmo-item-meta">Qté : {item.quantity}</div>
+                                        </div>
+                                        <div className="fmo-item-price">{Number(item.price).toFixed(2)} €</div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="fmo-footer">
+                                <span className="fmo-total-label">Total TTC :</span>
+                                <span className="fmo-total-val">{Number(order.totalAmount).toFixed(2)} €</span>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </>
     );

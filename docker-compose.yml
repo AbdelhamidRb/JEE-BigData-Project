@@ -4,8 +4,8 @@ services:
   mysql-db:
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: jee26
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       - "3307:3306"
     volumes:
@@ -19,9 +19,11 @@ services:
       - mysql-db
       - hbase-master
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/jee26?allowPublicKeyRetrieval=true&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
     volumes:
       - shared_logs:/app/logs
       - ./uploads:/app/uploads
@@ -79,12 +81,8 @@ services:
         sleep 25 &&
         hbase thrift start -p 9090 &
         sleep 10 &&
-        hbase shell -e \"create 'analytics_sales_by_category', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
-        hbase shell -e \"create 'analytics_reviews_by_category', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
-        hbase shell -e \"create 'analytics_revenue_by_month', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
-        hbase shell -e \"create 'analytics_top_products', {NAME => 'info', VERSIONS => 1}\" 2>/dev/null || true &&
-        hbase shell -e \"create 'analytics_sales_by_state', {NAME => 'stats', VERSIONS => 1}\" 2>/dev/null || true &&
-        echo 'Tables HBase créées ✅' &&
+        chmod +x /hbase-init.sh &&
+        /hbase-init.sh &&
         sleep infinity
       "
     restart: "no"

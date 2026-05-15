@@ -3,13 +3,16 @@ package com.example.demo.controllers;
 import com.example.demo.entities.*;
 import com.example.demo.dto.*;
 import com.example.demo.repositories.*;
-import com.example.demo.services.BigDataLoggingService; // ← AJOUTER
+import com.example.demo.services.BigDataLoggingService;
+import com.example.demo.services.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.transaction.annotation.Transactional; // ← AJOUTER
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -19,18 +22,17 @@ public class OrderController {
     @Autowired private OrderRepository orderRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private UserRepository userRepository;
-    @Autowired private BigDataLoggingService bigDataLoggingService; // ← AJOUTER
+    @Autowired private BigDataLoggingService bigDataLoggingService;
+    @Autowired private PaymentService paymentService;
 
-    // 1. Créer une nouvelle commande (Client)
     @PostMapping
-    @Transactional // ← AJOUTER
+    @Transactional
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest request, Authentication auth) {
         User user = userRepository.findByEmail(auth.getName()).orElseThrow();
 
         Order order = new Order();
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus("EN_ATTENTE");
         order.setShippingAddress(request.getShippingAddress());
 
         double totalAmount = 0;
@@ -56,35 +58,45 @@ public class OrderController {
         }
 
         order.setTotalAmount(totalAmount);
+
+        String method = request.getPaymentMethod();
+        if ("CARD".equalsIgnoreCase(method)) {
+            order.setStatus("CONFIRMEE");
+        } else {
+            order.setStatus("EN_ATTENTE");
+        }
+
         Order saved = orderRepository.save(order);
 
-        bigDataLoggingService.sendOrderToHDFS(saved, "ORDER_CREATED"); // ← AJOUTER
+        Payment payment = paymentService.processPayment(saved, method, request.getCardNumber(), request.getCardHolderName());
 
-        return ResponseEntity.ok(saved);
+        bigDataLoggingService.sendOrderToHDFS(saved, "ORDER_CREATED");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("order", saved);
+        response.put("payment", payment);
+        return ResponseEntity.ok(response);
     }
 
-    // 2. Voir l'historique de ses commandes (rien ne change)
     @GetMapping("/my-orders")
     public ResponseEntity<?> getMyOrders(Authentication auth) {
         User user = userRepository.findByEmail(auth.getName()).orElseThrow();
         return ResponseEntity.ok(orderRepository.findByUserOrderByIdDesc(user));
     }
 
-    // 3. Voir toutes les commandes (rien ne change)
     @GetMapping("/admin/all")
     public ResponseEntity<?> getAllOrdersForAdmin() {
         return ResponseEntity.ok(orderRepository.findAll());
     }
 
-    // 4. Modifier le statut (Admin)
     @PatchMapping("/admin/{id}/status")
-    @Transactional // ← AJOUTER
+    @Transactional
     public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Commande non trouvée"));
         order.setStatus(request.getStatus());
         Order saved = orderRepository.save(order);
 
-        bigDataLoggingService.sendOrderToHDFS(saved, "ORDER_STATUS_UPDATED"); // ← AJOUTER
+        bigDataLoggingService.sendOrderToHDFS(saved, "ORDER_STATUS_UPDATED");
 
         return ResponseEntity.ok(saved);
     }

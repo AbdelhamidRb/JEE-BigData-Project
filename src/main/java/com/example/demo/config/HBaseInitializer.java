@@ -1,17 +1,15 @@
 package com.example.demo.config;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 public class HBaseInitializer {
@@ -26,42 +24,33 @@ public class HBaseInitializer {
             "analytics_sales_by_state"
     };
 
+    @Autowired
+    private Connection hbaseConnection;
+
     @PostConstruct
     public void init() {
         log.info("[HBaseInit] Starting HBase initialization...");
-        Configuration config = createConfig();
 
-        if (!waitForHBase(config, 60)) {
+        if (!waitForHBase(60)) {
             log.error("[HBaseInit] HBase not available after 60s — skipping initialization");
             return;
         }
         log.info("[HBaseInit] HBase is available!");
 
-        try (Connection conn = ConnectionFactory.createConnection(config)) {
-            createTablesIfNotExist(conn);
+        try {
+            createTablesIfNotExist();
             log.info("[HBaseInit] All tables ready.");
         } catch (Exception e) {
             log.error("[HBaseInit] Failed to initialize HBase: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    private Configuration createConfig() {
-        Configuration config = HBaseConfiguration.create();
-        config.set("hbase.zookeeper.quorum", "hbase-master");
-        config.set("hbase.zookeeper.property.clientPort", "2181");
-        config.set("zookeeper.session.timeout", "60000");
-        config.set("hbase.client.retries.number", "3");
-        return config;
-    }
-
-    private boolean waitForHBase(Configuration config, int maxSeconds) {
+    private boolean waitForHBase(int maxSeconds) {
         for (int i = 0; i < maxSeconds / 5; i++) {
-            try (Connection conn = ConnectionFactory.createConnection(config)) {
-                Admin admin = conn.getAdmin();
+            try {
+                Admin admin = hbaseConnection.getAdmin();
                 admin.listTableNames();
                 admin.close();
-                conn.close();
                 log.info("[HBaseInit] HBase responded on attempt " + (i + 1));
                 return true;
             } catch (Exception e) {
@@ -72,17 +61,17 @@ public class HBaseInitializer {
         return false;
     }
 
-    private void createTablesIfNotExist(Connection conn) throws Exception {
-        Admin admin = conn.getAdmin();
+    private void createTablesIfNotExist() throws Exception {
+        Admin admin = hbaseConnection.getAdmin();
         try {
             for (String tableName : TABLES) {
                 TableName tn = TableName.valueOf(tableName);
                 if (!admin.tableExists(tn)) {
                     HTableDescriptor desc = new HTableDescriptor(tn);
                     if (tableName.equals("analytics_top_products")) {
-                        desc.addFamily(new org.apache.hadoop.hbase.HColumnDescriptor("info"));
+                        desc.addFamily(new HColumnDescriptor("info"));
                     } else {
-                        desc.addFamily(new org.apache.hadoop.hbase.HColumnDescriptor("stats"));
+                        desc.addFamily(new HColumnDescriptor("stats"));
                     }
                     admin.createTable(desc);
                     log.info("[HBaseInit] Created table: " + tableName);
@@ -96,16 +85,10 @@ public class HBaseInitializer {
     }
 
     public void writeToHBase(String tableName, String rowKey, String family, String qualifier, String value) {
-        try {
-            Configuration config = createConfig();
-            try (Connection conn = ConnectionFactory.createConnection(config);
-                 Table table = conn.getTable(TableName.valueOf(tableName))) {
-
-                org.apache.hadoop.hbase.client.Put put =
-                        new org.apache.hadoop.hbase.client.Put(rowKey.getBytes());
-                put.addColumn(family.getBytes(), qualifier.getBytes(), value.getBytes());
-                table.put(put);
-            }
+        try (Table table = hbaseConnection.getTable(TableName.valueOf(tableName))) {
+            Put put = new Put(rowKey.getBytes());
+            put.addColumn(family.getBytes(), qualifier.getBytes(), value.getBytes());
+            table.put(put);
         } catch (Exception e) {
             log.error("[HBaseInit] Failed to write to HBase table " + tableName + ": " + e.getMessage());
         }

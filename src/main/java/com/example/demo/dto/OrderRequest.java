@@ -1,4 +1,5 @@
 package com.example.demo.dto;
+
 import lombok.Data;
 import java.util.List;
 
@@ -6,4 +7,7 @@ import java.util.List;
 public class OrderRequest {
     private String shippingAddress;
     private List<OrderItemDto> items;
+    private String paymentMethod;
+    private String cardNumber;
+    private String cardHolderName;
 }

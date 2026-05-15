@@ -4,6 +4,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -11,17 +12,8 @@ import java.util.*;
 @Service
 public class HBaseAnalyticsService {
 
-    private org.apache.hadoop.conf.Configuration getHBaseConfig() {
-        org.apache.hadoop.conf.Configuration config = org.apache.hadoop.hbase.HBaseConfiguration.create();
-        config.set("hbase.zookeeper.quorum", "hbase-master");
-        config.set("hbase.zookeeper.property.clientPort", "2181");
-        config.set("hbase.client.retries.number", "3");
-        config.set("hbase.rpc.timeout", "10000");
-        config.set("hbase.client.operation.timeout", "15000");
-        config.set("zookeeper.session.timeout", "60000");
-        config.set("zookeeper.recovery.retry", "1");
-        return config;
-    }
+    @Autowired
+    private Connection hbaseConnection;
 
     private Map<String, String> rowToMap(Result result) {
         Map<String, String> map = new HashMap<>();
@@ -41,9 +33,7 @@ public class HBaseAnalyticsService {
     public List<Map<String, String>> scanTable(String tableName) {
         System.out.println("[HBase] Attempting to connect to: " + tableName);
         try {
-            org.apache.hadoop.conf.Configuration config = getHBaseConfig();
-            Connection connection = ConnectionFactory.createConnection(config);
-            Table table = connection.getTable(TableName.valueOf(tableName));
+            Table table = hbaseConnection.getTable(TableName.valueOf(tableName));
             List<Map<String, String>> results = new ArrayList<>();
             Scan scan = new Scan();
             scan.setCaching(100);
@@ -55,7 +45,6 @@ public class HBaseAnalyticsService {
             }
             scanner.close();
             table.close();
-            connection.close();
             System.out.println("[HBase] " + tableName + " → " + results.size() + " rows");
             return results;
         } catch (TableNotFoundException e) {
@@ -63,7 +52,6 @@ public class HBaseAnalyticsService {
             return new ArrayList<>();
         } catch (Exception e) {
             System.err.println("[HBase] Error reading " + tableName + " : " + e.getMessage());
-            e.printStackTrace();
             return new ArrayList<>();
         }
     }

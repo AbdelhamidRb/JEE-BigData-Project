@@ -8,42 +8,43 @@ export default function Unauthorized() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (!isAuthenticated) {
-                navigate('/login');
-            } else if (userRole === 'ADMIN') {
-                navigate('/admin/dashboard');
-            } else {
-                navigate('/dashboard');
-            }
+            if (!isAuthenticated) navigate('/login');
+            else if (userRole === 'ADMIN') navigate('/admin/dashboard');
+            else navigate('/dashboard');
         }, 5000);
-
         return () => clearTimeout(timer);
     }, [isAuthenticated, userRole, navigate]);
 
     return (
         <>
-            <style>{baseStyles}</style>
-            <div className="vuf-root">
-                <div className="vuf-content">
-                    <div className="vuf-icon">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap');
+                .fuf-root { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: 2rem; background: #0A0A0A; font-family: 'Inter', sans-serif; }
+                .fuf-content { text-align: center; max-width: 480px; }
+                .fuf-icon { display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 1px solid rgba(255,94,0,0.15); background: rgba(255,94,0,0.06); color: #FF5E00; margin-bottom: 1.5rem; }
+                .fuf-title { font-family: 'Oswald', sans-serif; font-size: 2rem; color: #fff; margin-bottom: 1rem; text-transform: uppercase; }
+                .fuf-text { font-size: 0.95rem; color: #6B6B6B; line-height: 1.6; margin-bottom: 2rem; }
+                .fuf-actions { display: flex; gap: 1rem; justify-content: center; }
+                .fuf-btn-primary { display: inline-block; padding: 0.8rem 1.6rem; background: #FF5E00; color: #0A0A0A; text-decoration: none; font-family: 'Oswald', sans-serif; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; transition: background 0.2s; }
+                .fuf-btn-primary:hover { background: #FF7A2E; }
+                @media (max-width: 480px) { .fuf-title { font-size: 1.5rem; } }
+            `}</style>
+            <div className="fuf-root">
+                <div className="fuf-content">
+                    <div className="fuf-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
                     </div>
-                    <h1 className="vuf-title">Accès non autorisé</h1>
-                    <p className="vuf-text">
-                        Vous n'avez pas la permission d'accéder à cette page.
-                        <br />
-                        Redirection automatique dans quelques instants...
-                    </p>
-                    <div className="vuf-actions">
+                    <h1 className="fuf-title">Accès non autorisé</h1>
+                    <p className="fuf-text">Vous n'avez pas la permission d'accéder à cette page. Redirection automatique dans quelques instants...</p>
+                    <div className="fuf-actions">
                         {!isAuthenticated ? (
-                            <Link to="/login" className="vuf-btn-primary">Se connecter</Link>
+                            <Link to="/login" className="fuf-btn-primary">Se connecter</Link>
                         ) : userRole === 'ADMIN' ? (
-                            <Link to="/admin/dashboard" className="vuf-btn-primary">Retour au tableau de bord admin</Link>
+                            <Link to="/admin/dashboard" className="fuf-btn-primary">Tableau de bord admin</Link>
                         ) : (
-                            <Link to="/dashboard" className="vuf-btn-primary">Retour au tableau de bord</Link>
+                            <Link to="/dashboard" className="fuf-btn-primary">Tableau de bord</Link>
                         )}
                     </div>
                 </div>
@@ -51,91 +52,3 @@ export default function Unauthorized() {
         </>
     );
 }
-
-const baseStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
-
-    :root {
-        --cream: #F5F0E8;
-        --sand: #E8DDD0;
-        --bark: #B8A898;
-        --earth: #6B5B4E;
-        --charcoal: #2A2420;
-        --black: #0F0D0C;
-        --accent: #C8472A;
-        --gold: #C9A96E;
-        --white: #FDFAF7;
-    }
-
-    .vuf-root {
-        min-height: calc(100vh - 68px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-        background: var(--cream);
-        font-family: 'DM Sans', sans-serif;
-    }
-
-    .vuf-content {
-        text-align: center;
-        max-width: 480px;
-    }
-
-    .vuf-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: var(--sand);
-        color: var(--earth);
-        margin-bottom: 1.5rem;
-    }
-
-    .vuf-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 2rem;
-        color: var(--black);
-        margin-bottom: 1rem;
-    }
-
-    .vuf-text {
-        font-size: 1rem;
-        color: var(--earth);
-        line-height: 1.6;
-        margin-bottom: 2rem;
-    }
-
-    .vuf-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-    }
-
-    .vuf-btn-primary {
-        display: inline-block;
-        padding: 0.85rem 1.75rem;
-        background: var(--charcoal);
-        color: var(--white);
-        text-decoration: none;
-        border-radius: 3px;
-        font-size: 0.8rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        font-weight: 500;
-        transition: background 0.2s, transform 0.12s;
-    }
-
-    .vuf-btn-primary:hover {
-        background: var(--black);
-        transform: translateY(-1px);
-    }
-
-    @media (max-width: 480px) {
-        .vuf-title { font-size: 1.5rem; }
-        .vuf-icon { width: 80px; height: 80px; }
-        .vuf-icon svg { width: 48px; height: 48px; }
-    }
-`;
